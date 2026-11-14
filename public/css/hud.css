@@ -10,6 +10,7 @@
   touch-action: none;
   cursor: crosshair;
 }
+#stage:active { cursor: grabbing; }
 
 #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .label {
@@ -59,15 +60,41 @@
 .player-list.compact { font-size: 0.95rem; gap: 1px; }
 .player-list.compact .dot { width: 11px; height: 11px; }
 
+/* Loggboken kan legges sammen til én linje (siste melding), slik at den ikke dekker brettet. */
 .log {
   left: 8px;
   top: 112px;
-  width: min(280px, 34vw);
-  max-height: 30vh;
-  overflow-y: auto;
-  padding: 6px 8px;
+  width: min(300px, 40vw);
+  max-height: 36vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
-#log { list-style: none; margin: 0; padding: 0; font-size: 0.92rem; line-height: 1.15; }
+.log-toggle {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  padding: 3px 8px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.log-toggle:hover { color: var(--text); }
+#log {
+  list-style: none;
+  margin: 0;
+  padding: 5px 8px;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  overflow-y: auto;
+}
+.log.collapsed #log { overflow: hidden; }
+.log.collapsed #log li:not(:last-child) { display: none; }
+.log.collapsed #log li { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #log li { margin: 0 0 3px; color: var(--dim); }
 #log li.new { color: var(--text); }
 #log li.bad { color: var(--danger); }
@@ -95,16 +122,16 @@
 .orders.locked .helm, .orders.locked .actions { opacity: 0.45; pointer-events: none; }
 
 .helm { display: flex; align-items: center; gap: 12px; }
+/* 3 x 3 knapper: de åtte retningene rundt, og hold kurs i midten. */
 .dpad {
-  position: relative;
-  width: 108px;
-  height: 108px;
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  gap: 3px;
   flex: none;
 }
 .pad {
-  position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   font: inherit;
   font-size: 1rem;
   line-height: 1;
@@ -115,14 +142,10 @@
   touch-action: manipulation;
   padding: 0;
 }
-.pad.nw { left: 0; top: 0; }
-.pad.ne { right: 0; top: 0; }
-.pad.sw { left: 0; bottom: 0; }
-.pad.se { right: 0; bottom: 0; }
-.pad.hold { left: 34px; top: 34px; width: 40px; height: 40px; border-radius: 50%; z-index: 1; }
+.pad.hold { border-radius: 50%; }
 .pad.on, .act.on { background: #a87f0c; border-color: var(--accent); color: #fff; }
 .pad:disabled, .act:disabled { opacity: 0.35; cursor: not-allowed; }
-.pad small { display: block; font-size: 0.7rem; color: var(--dim); }
+.pad small { display: block; font-size: 0.62rem; color: var(--dim); }
 .pad.on small { color: #fff; }
 
 .readout { font-size: 1rem; line-height: 1.2; }
@@ -192,16 +215,15 @@
     top: auto;
     width: auto;
     bottom: calc(var(--orders-height, 250px) + 12px);
-    max-height: 3.6em;
+    max-height: 40vh;
   }
-  .log.open { max-height: 40vh; }
+  .zoom-btn { display: none; } /* på berøringsskjerm zoomer man med to fingre */
   .top-left { min-width: 0; max-width: 56vw; }
   .top-right { max-width: 40vw; }
   .top-right .tag { display: none; }
   .icon-btn { width: 30px; height: 30px; }
-  .dpad { width: 96px; height: 96px; }
-  .pad { width: 41px; height: 41px; }
-  .pad.hold { left: 30px; top: 30px; width: 36px; height: 36px; }
+  .dpad { grid-template-columns: repeat(3, 40px); }
+  .pad { width: 40px; height: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

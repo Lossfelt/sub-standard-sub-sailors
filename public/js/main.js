@@ -10,6 +10,9 @@ import { RULES_HTML } from './texts.js';
 const $ = (id) => document.getElementById(id);
 // Brettet står på skrå, så piltastene følger skjermdiagonalene.
 const ARROW_SLOTS = { ArrowUp: 'NE', ArrowRight: 'SE', ArrowDown: 'SW', ArrowLeft: 'NW' };
+// W, A, S, D flytter utsnittet (piksler per tastetrykk), + og - zoomer.
+const PAN_KEYS = { w: [0, 60], s: [0, -60], a: [60, 0], d: [-60, 0] };
+const ZOOM_KEYS = { '+': 1.3, '=': 1.3, '-': 1 / 1.3 };
 const screens = { menu: $('menu'), lobby: $('lobby'), game: $('game') };
 
 function show(name) {
@@ -33,6 +36,7 @@ const hud = new Hud({
   onAction: (type) => game.onAction(type),
   onSend: () => game.send(),
   onRotate: (step) => game.rotate(step),
+  onZoom: (factor) => stage.zoomBy(factor),
   onAgain: () => net.send({ t: 'again' }),
   onQuit: () => {
     if (window.confirm('Vil du forlate spillet?')) leaveRoom();
@@ -59,6 +63,8 @@ window.addEventListener('keydown', (e) => {
   if (screens.game.hidden || target.matches('input, select, textarea') || $('rules').open) return;
   if (e.key === 'q' || e.key === 'Q') game.rotate(-1);
   else if (e.key === 'e' || e.key === 'E') game.rotate(1);
+  else if (PAN_KEYS[e.key.toLowerCase()]) stage.panBy(...PAN_KEYS[e.key.toLowerCase()]);
+  else if (ZOOM_KEYS[e.key]) stage.zoomBy(ZOOM_KEYS[e.key]);
   else if (e.key === 'Enter' && !target.matches('button')) game.send();
   else if (ARROW_SLOTS[e.key]) {
     e.preventDefault();

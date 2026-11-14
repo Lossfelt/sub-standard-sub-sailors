@@ -5,7 +5,7 @@ import {
   key, dist, accelerate, moveSub, isBlocked, speedOf, canTarget,
 } from '../shared/grid.js';
 
-const ACCELS = [null, 'N', 'S', 'E', 'W'];
+const ACCELS = [null, 'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const CONTACT_MAX_AGE = 3;
 
 export class Bot {

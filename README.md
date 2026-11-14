@@ -38,7 +38,8 @@ npm start
 Kjernereglene følger idédokumentet, med vektorbasert bevegelse og fjell som terreng. Der dokumentet
 var åpent for tolkning er dette valgt:
 
-- **Én manøver og én handling per runde.** Manøver er å endre farten ett nivå (eller holde).
+- **Én manøver og én handling per runde.** Manøver er å endre farten ett nivå i én av åtte retninger (eller holde). En diagonal endrer
+  begge akser, og avvises hvis én av aksene allerede er på maks.
   Handling er lytt, fokuser sonar, torpedo eller reparer. Passiv sonar virker alltid, unntatt når
   du fokuserer.
 - **Avstand** telles i ruter der diagonaler er ett steg. **Fartsnivå** er den største av de to

@@ -67,6 +67,8 @@
       <div class="tools">
         <button id="rot-left" class="icon-btn" aria-label="Snu brettet mot venstre" title="Snu brettet (Q)">&#8634;</button>
         <button id="rot-right" class="icon-btn" aria-label="Snu brettet mot høyre" title="Snu brettet (E)">&#8635;</button>
+        <button id="zoom-in" class="icon-btn zoom-btn" aria-label="Zoom inn" title="Zoom inn (+)">+</button>
+        <button id="zoom-out" class="icon-btn zoom-btn" aria-label="Zoom ut" title="Zoom ut (-)">&minus;</button>
         <button id="sound" class="icon-btn" aria-label="Lyd av eller på" title="Lyd">&#9835;</button>
         <button id="help" class="icon-btn" aria-label="Regler" title="Regler">?</button>
         <button id="quit" class="icon-btn" aria-label="Forlat spillet" title="Forlat spillet">&#10005;</button>
@@ -78,17 +80,24 @@
     </aside>
 
     <section id="log-panel" class="hud log panel" aria-label="Loggbok">
+      <button id="log-toggle" class="log-toggle" aria-expanded="true" aria-controls="log">
+        <span>Loggbok</span><span id="log-arrow" aria-hidden="true">&#9662;</span>
+      </button>
       <ol id="log" aria-live="polite"></ol>
     </section>
 
     <section id="orders" class="hud orders panel" aria-label="Ordre">
       <div class="helm">
         <div class="dpad" role="group" aria-label="Endre fart">
-          <button data-slot="NW" class="pad nw"></button>
-          <button data-slot="NE" class="pad ne"></button>
-          <button data-slot="SW" class="pad sw"></button>
-          <button data-slot="SE" class="pad se"></button>
+          <button data-slot="NW" class="pad"></button>
+          <button data-slot="N" class="pad"></button>
+          <button data-slot="NE" class="pad"></button>
+          <button data-slot="W" class="pad"></button>
           <button data-slot="hold" class="pad hold" aria-label="Hold fart og kurs">&#9679;</button>
+          <button data-slot="E" class="pad"></button>
+          <button data-slot="SW" class="pad"></button>
+          <button data-slot="S" class="pad"></button>
+          <button data-slot="SE" class="pad"></button>
         </div>
         <div class="readout">
           <div id="speed">Fart: stille</div>

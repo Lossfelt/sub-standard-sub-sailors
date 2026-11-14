@@ -35,11 +35,16 @@ export const CONFIG = {
   contactMemory: 6, // runder en kontakt vises på klientens kart
 };
 
+// Farten kan endres i åtte retninger. En diagonal endrer begge akser ett nivå.
 export const DIRS = {
   N: { dx: 0, dy: -1 },
-  S: { dx: 0, dy: 1 },
+  NE: { dx: 1, dy: -1 },
   E: { dx: 1, dy: 0 },
+  SE: { dx: 1, dy: 1 },
+  S: { dx: 0, dy: 1 },
+  SW: { dx: -1, dy: 1 },
   W: { dx: -1, dy: 0 },
+  NW: { dx: -1, dy: -1 },
 };
 
 export const PLAYER_COLORS = [

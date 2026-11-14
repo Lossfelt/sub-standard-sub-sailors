@@ -1,6 +1,7 @@
 // Renderer, isometrisk kamera og koordinatomregning. Scenen tegnes i lav oppløsning og
 // skaleres opp uten utjevning, som gir det pikselerte uttrykket.
 import * as THREE from 'three';
+import { PostProcess } from './post.js';
 
 const PITCH = Math.PI / 6; // 30 grader gir klassisk 2:1 "isometrisk" pikselgrafikk
 const CAMERA_DISTANCE = 60;
@@ -10,8 +11,10 @@ export class Stage {
   constructor(canvas, labelRoot) {
     this.canvas = canvas;
     this.labelRoot = labelRoot;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
     this.renderer.setPixelRatio(1);
+    this.renderer.shadowMap.enabled = true;
+    this.post = new PostProcess(this.renderer);
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
     this.raycaster = new THREE.Raycaster();
@@ -32,11 +35,17 @@ export class Stage {
   }
 
   addLights() {
-    this.scene.add(new THREE.HemisphereLight(0xbfe6ff, 0x0b2233, 1.25));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-    sun.position.set(4, 10, 3);
+    this.scene.add(new THREE.HemisphereLight(0xa9dcff, 0x0b2a3a, 1.0));
+    // Sollyset ovenfra kaster skygger, slik at fjell og ubåter får tyngde mot bunnen.
+    const sun = new THREE.DirectionalLight(0xf2fbff, 2.0);
+    sun.position.set(7, 14, 4);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.bias = -0.002;
+    sun.shadow.normalBias = 0.03;
+    this.sun = sun;
     this.scene.add(sun);
-    const fill = new THREE.DirectionalLight(0x3fb6d8, 0.5);
+    const fill = new THREE.DirectionalLight(0x3fb6d8, 0.45);
     fill.position.set(-5, 3, -6);
     this.scene.add(fill);
   }
@@ -53,13 +62,20 @@ export class Stage {
     this.boardSize = size;
     this.zoom = 1;
     this.pan.set(0, 0);
+    const reach = size * 0.8 + 2; // skyggekartet må dekke hele brettet
+    const cam = this.sun.shadow.camera;
+    Object.assign(cam, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: 50 });
+    cam.updateProjectionMatrix();
   }
 
   resize() {
     const w = this.canvas.clientWidth || 1;
     const h = this.canvas.clientHeight || 1;
-    const pixel = w < 760 ? 2 : 3;
-    this.renderer.setSize(Math.ceil(w / pixel), Math.ceil(h / pixel), false);
+    const pixel = w < 1100 ? 2 : 3; // skjermpiksler per spillpiksel
+    const width = Math.ceil(w / pixel);
+    const height = Math.ceil(h / pixel);
+    this.renderer.setSize(width, height, false);
+    this.post.setSize(width, height);
     this.updateCamera();
   }
 
@@ -100,9 +116,26 @@ export class Stage {
     this.pan.y = THREE.MathUtils.clamp(this.pan.y + dy * unitsPerPixel, -limit, limit);
   }
 
-  zoomBy(factor) {
-    this.zoom = THREE.MathUtils.clamp(this.zoom * factor, 1, 3.5);
-    if (this.zoom === 1) this.pan.set(0, 0);
+  // Zoomer rundt et punkt på skjermen (CSS-piksler), slik at det som er under pekeren blir stående.
+  // Uten punkt zoomes det rundt midten. Helt utzoomet sentreres brettet igjen.
+  zoomBy(factor, clientX = null, clientY = null) {
+    const before = this.zoom;
+    const after = THREE.MathUtils.clamp(before * factor, 1, 4);
+    if (after === before) return;
+    if (after < before) {
+      this.pan.multiplyScalar(before > 1 ? (after - 1) / (before - 1) : 0);
+    } else if (clientX != null) {
+      const rect = this.canvas.getBoundingClientRect();
+      const halfH = this.camera.top;
+      const offX = (((clientX - rect.left) / rect.width) * 2 - 1) * this.camera.right;
+      const offY = (1 - ((clientY - rect.top) / rect.height) * 2) * halfH;
+      const lift = halfH * (1 - Math.max(0.45, 1 - this.bottomInset / rect.height));
+      const shift = 1 / before - 1 / after;
+      this.pan.x += offX * shift;
+      this.pan.y += (offY - lift) * shift;
+    }
+    this.zoom = after;
+    this.panBy(0, 0); // holder utsnittet innenfor grensene
   }
 
   cellToWorld(x, y, height = 0) {
@@ -127,12 +160,14 @@ export class Stage {
     return inside ? { x, y } : null;
   }
 
-  // Hvilken skjermdiagonal (NE/SE/SW/NW) en rutenettretning peker i med gjeldende brettvinkel.
+  // Hvilken av åtte skjermretninger (N = opp, NE, E = høyre ...) en rutenettretning peker i
+  // med gjeldende brettvinkel. Rutenettets hovedretninger havner på skjermens diagonaler.
   screenSlot(dx, dy) {
     const yaw = this.targetYaw;
     const sx = dx * Math.cos(yaw) - dy * Math.sin(yaw);
     const sy = -(dx * Math.sin(yaw) + dy * Math.cos(yaw));
-    return (sy > 0 ? 'N' : 'S') + (sx > 0 ? 'E' : 'W');
+    const octant = Math.round(Math.atan2(sx, sy) / (Math.PI / 4));
+    return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][(octant + 8) % 8];
   }
 
   addLabel(className, text = '') {
@@ -168,7 +203,7 @@ export class Stage {
     this.shake *= 0.9;
     this.updateCamera();
     for (const callback of this.frameCallbacks) callback(dt, time / 1000);
-    this.renderer.render(this.scene, this.camera);
+    this.post.render(this.scene, this.camera, time / 1000);
     this.updateLabels();
   }
 }

@@ -3,6 +3,7 @@ import { SLOT_ARROW } from './texts.js';
 
 const $ = (id) => document.getElementById(id);
 const MAX_LOG_LINES = 80;
+const LOG_KEY = 'ssss-log';
 
 export class Hud {
   constructor(handlers) {
@@ -23,7 +24,10 @@ export class Hud {
     $('quit').addEventListener('click', () => handlers.onQuit());
     $('again').addEventListener('click', () => handlers.onAgain());
     $('watch').addEventListener('click', () => this.el.banner.classList.add('mini'));
-    this.el.logPanel.addEventListener('click', () => this.el.logPanel.classList.toggle('open'));
+    $('zoom-in').addEventListener('click', () => handlers.onZoom(1.3));
+    $('zoom-out').addEventListener('click', () => handlers.onZoom(1 / 1.3));
+    $('log-toggle').addEventListener('click', () => this.setLogOpen(this.el.logPanel.classList.contains('collapsed')));
+    this.setLogOpen(this.storedLogOpen());
     setInterval(() => this.tickClock(), 250);
     new ResizeObserver(() => handlers.onLayout()).observe(this.el.orders);
   }
@@ -34,7 +38,26 @@ export class Hud {
     const height = this.el.orders.hidden ? 0 : this.el.orders.offsetHeight;
     document.documentElement.style.setProperty('--orders-height', `${height}px`);
     if (!height) return 0;
-    return height + (narrow ? 70 : 16);
+    return height + (narrow ? 76 : 16);
+  }
+
+  // Åpen som standard bare på brede skjermer, der loggen har plass ved siden av brettet.
+  storedLogOpen() {
+    try {
+      const saved = localStorage.getItem(LOG_KEY);
+      if (saved) return saved === 'open';
+    } catch { /* uten lagring brukes standardvalget */ }
+    return window.innerWidth >= 1500;
+  }
+
+  setLogOpen(open) {
+    this.el.logPanel.classList.toggle('collapsed', !open);
+    $('log-toggle').setAttribute('aria-expanded', String(open));
+    $('log-arrow').textContent = open ? '▾' : '▸';
+    try {
+      localStorage.setItem(LOG_KEY, open ? 'open' : 'closed');
+    } catch { /* valget huskes bare ikke */ }
+    this.el.log.scrollTop = this.el.log.scrollHeight;
   }
 
   setRound(round) {
@@ -139,7 +162,7 @@ export class Hud {
     li.textContent = text;
     this.el.log.append(li);
     while (this.el.log.children.length > MAX_LOG_LINES) this.el.log.firstChild.remove();
-    this.el.logPanel.scrollTop = this.el.logPanel.scrollHeight;
+    this.el.log.scrollTop = this.el.log.scrollHeight;
   }
 
   logRound(round) {

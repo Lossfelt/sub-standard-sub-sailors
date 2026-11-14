@@ -2,7 +2,8 @@
 import { buildTerrain } from './scene/terrain.js';
 import { Markers } from './scene/markers.js';
 import { Effects } from './scene/effects.js';
-import { makeSub, makeTorpedo, setHeading, disposeObject } from './scene/models.js';
+import { Life } from './scene/life.js';
+import { makeSub, makeTorpedo, setHeading, addHeadlight, disposeObject } from './scene/models.js';
 import { COMPASS } from './texts.js';
 
 const SUB_HEIGHT = 0.45;
@@ -19,8 +20,10 @@ export class World {
     stage.scene.add(this.terrain.group);
     this.markers = new Markers(stage);
     this.effects = new Effects(stage);
+    this.life = new Life(stage, this.terrain.vents, this.terrain.rng);
     const colour = this.players.get(you).color;
     this.sub = makeSub(colour);
+    addHeadlight(this.sub);
     this.ghost = makeSub(colour, 'ghost');
     this.ghost.visible = false;
     stage.scene.add(this.sub, this.ghost);
@@ -163,7 +166,8 @@ export class World {
   frame(dt, time) {
     this.effects.update(dt);
     this.markers.update(time);
-    this.terrain.sway(time);
+    this.terrain.update(time);
+    this.life.update(time);
     const bob = Math.sin(time * 2) * 0.03;
     for (const model of [this.sub, this.ghost, ...this.others.values()]) {
       model.position.y = SUB_HEIGHT + bob;
@@ -179,6 +183,7 @@ export class World {
     this.terrain.dispose();
     this.markers.dispose();
     this.effects.dispose();
+    this.life.dispose();
     for (const id of [...this.torpedoes.keys()]) this.removeTorpedo(id);
     [this.sub, this.ghost, ...this.others.values(), ...this.wrecks].forEach(disposeObject);
     [...this.labels, this.hoverLabel].forEach((l) => l.remove());

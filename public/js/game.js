@@ -42,7 +42,8 @@ export class Game {
     this.cursor = null;
     this.hud.clearLog();
     this.hud.hideBanner();
-    this.hud.log(`Brettet er ${this.board.size} × ${this.board.size} ruter. God jakt, kaptein.`);
+    this.hud.log(`Brettet er ${this.board.size} × ${this.board.size} ruter. Dra i brettet for å flytte utsnittet, rull for å zoome.`);
+    this.hud.log('God jakt, kaptein.');
     this.applyView();
     this.beginRound();
     if (msg.over) showGameOver(this, msg.over);

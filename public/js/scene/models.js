@@ -4,6 +4,7 @@ import * as THREE from 'three';
 function part(geometry, material, x = 0, y = 0, z = 0) {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(x, y, z);
+  mesh.castShadow = !material.transparent;
   return mesh;
 }
 
@@ -29,6 +30,9 @@ export function makeSub(colorHex, variant = 'normal') {
     part(new THREE.BoxGeometry(0.17, 0.13, 0.13), hullMat, 0.03, 0.19, 0),
     part(new THREE.BoxGeometry(0.035, 0.14, 0.035), darkMat, 0.07, 0.31, 0),
     part(new THREE.SphereGeometry(0.08, 6, 4), glassMat, 0.29, 0.03, 0),
+    part(new THREE.SphereGeometry(0.035, 5, 3), glassMat, 0.08, 0.04, 0.155), // koøyer
+    part(new THREE.SphereGeometry(0.035, 5, 3), glassMat, 0.08, 0.04, -0.155),
+    part(new THREE.BoxGeometry(0.42, 0.03, 0.2), darkMat, -0.02, -0.15, 0), // kjøl
     part(new THREE.BoxGeometry(0.1, 0.3, 0.03), darkMat, -0.34, 0, 0),
     part(new THREE.BoxGeometry(0.1, 0.03, 0.3), darkMat, -0.34, 0, 0),
     propeller,
@@ -56,6 +60,14 @@ export function makeTorpedo() {
   );
   group.scale.setScalar(1.3);
   return group;
+}
+
+// Lyskaster foran baugen: varmt lys som treffer bunnen under ubåten.
+export function addHeadlight(sub) {
+  const lamp = new THREE.PointLight('#ffe2a0', 2.4, 3.4, 1.4);
+  lamp.position.set(0.3, -0.12, 0);
+  sub.add(lamp);
+  return lamp;
 }
 
 // Snur en modell slik at den peker i rutenettretningen (dx, dy).

@@ -24,6 +24,12 @@ test('akselerasjon er begrenset til 2 per akse', () => {
   assert.deepEqual(accelerate(2, 0, 'N'), { vx: 2, vy: -1 });
 });
 
+test('diagonal akselerasjon endrer begge akser, og avvises hvis én akse er på maks', () => {
+  assert.deepEqual(accelerate(0, 0, 'NE'), { vx: 1, vy: -1 });
+  assert.deepEqual(accelerate(1, -1, 'SW'), { vx: 0, vy: 0 });
+  assert.deepEqual(accelerate(2, 0, 'SE'), { vx: 2, vy: 0 });
+});
+
 test('brettkant og fjell stopper ubåten helt', () => {
   const board = makeBoard(10, [[5, 5]]);
   const edge = moveSub(board, 9, 3, 2, 1);

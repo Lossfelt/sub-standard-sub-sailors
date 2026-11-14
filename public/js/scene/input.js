@@ -1,5 +1,5 @@
-// Peker- og tastaturstyring av brettet: klikk velger rute, dra flytter utsnittet,
-// hjul eller to fingre zoomer.
+// Pekerstyring av brettet: klikk velger rute, dra (med hvilken som helst museknapp eller én
+// finger) flytter utsnittet, hjul eller to fingre zoomer rundt pekeren.
 const DRAG_THRESHOLD = 7; // piksler før et trykk regnes som dra og ikke klikk
 
 export function attachInput(stage, { onCell, onHover }) {
@@ -35,7 +35,10 @@ export function attachInput(stage, { onCell, onHover }) {
     p.y = e.clientY;
     if (pointers.size === 2) {
       const distance = spread();
-      if (pinchDistance > 0) stage.zoomBy(distance / pinchDistance);
+      if (pinchDistance > 0) {
+        const [a, b] = [...pointers.values()];
+        stage.zoomBy(distance / pinchDistance, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      }
       pinchDistance = distance;
       return;
     }
@@ -46,7 +49,7 @@ export function attachInput(stage, { onCell, onHover }) {
   const release = (e) => {
     const p = pointers.get(e.pointerId);
     pointers.delete(e.pointerId);
-    if (p && !dragging && e.type === 'pointerup') {
+    if (p && !dragging && e.type === 'pointerup' && e.button === 0) {
       const cell = stage.pick(e.clientX, e.clientY);
       if (cell) onCell(cell);
     }
@@ -57,6 +60,9 @@ export function attachInput(stage, { onCell, onHover }) {
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    stage.zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12);
+    stage.zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY);
   }, { passive: false });
+
+  // Høyre og midtre museknapp kan også dra utsnittet, så hurtigmenyen må ikke komme i veien.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 }

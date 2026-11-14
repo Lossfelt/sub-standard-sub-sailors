@@ -8,8 +8,9 @@ export function cellName(x, y) {
   return `${String.fromCharCode(65 + x)}${y + 1}`;
 }
 
-export const COMPASS = { N: 'N', S: 'S', E: 'Ø', W: 'V' };
-export const SLOT_ARROW = { NE: '↗', SE: '↘', SW: '↙', NW: '↖' };
+export const COMPASS = { N: 'N', NE: 'NØ', E: 'Ø', SE: 'SØ', S: 'S', SW: 'SV', W: 'V', NW: 'NV' };
+// Piler for de åtte skjermretningene på styreknappene.
+export const SLOT_ARROW = { N: '↑', NE: '↗', E: '→', SE: '↘', S: '↓', SW: '↙', W: '←', NW: '↖' };
 
 export function describeSpeed(vx, vy) {
   const parts = [];
@@ -29,7 +30,7 @@ export const RULES_HTML = `
 <ul><li>Vær den siste ubåten som flyter. Ingen ser hverandre, alt handler om lyd.</li>
 <li>Alle gir ordre samtidig. Når alle har sendt, avgjøres runden.</li></ul>
 <h3>Manøver</h3>
-<ul><li>Hver runde kan du endre farten ett nivå i én retning. Farten holder seg til du bremser ved å akselerere motsatt vei.</li>
+<ul><li>Hver runde kan du endre farten ett nivå i én av åtte retninger. En diagonal endrer begge akser. Farten holder seg til du bremser ved å akselerere motsatt vei.</li>
 <li>Maks fart er ${CONFIG.maxSpeed} per akse. Brettkant og fjell stopper ubåten helt.</li></ul>
 <h3>Sonar</h3>
 <ul><li><b>Lytt:</b> sjanse for å høre hver ubåt = støyen dens minus avstanden i ruter (prosent).</li>
@@ -46,4 +47,4 @@ export const RULES_HTML = `
 <ul><li>En skadet ubåt må reparere ${CONFIG.damage.repairsNeeded} ganger i løpet av ${CONFIG.damage.roundsToRepair} runder, ellers synker den.</li>
 <li>Et nytt treff mens du er skadet senker deg.</li></ul>
 <h3>Styring</h3>
-<ul><li>Dra for å flytte utsnittet, rull eller knip for å zoome, Q og E snur brettet. Piltastene flytter rutemarkøren, mellomrom velger ruten og Enter sender ordre.</li></ul>`;
+<ul><li>Dra i brettet (eller bruk W, A, S, D) for å flytte utsnittet. Rull, knip eller bruk + og - for å zoome. Q og E snur brettet. Piltastene flytter rutemarkøren, mellomrom velger ruten og Enter sender ordre.</li></ul>`;

@@ -1,146 +1,103 @@
-// Bygger selve brettet: fliser, undervannsfjell og pynt. Alt utseende trekkes fra spillets frø,
-// slik at alle spillere ser det samme brettet.
+// Bygger selve brettet: sokkel, fliser, lysmønster, fjell og pynt. Alt utseende trekkes fra
+// spillets frø, slik at alle spillere ser det samme brettet.
 import * as THREE from 'three';
 import { makeRng } from '/shared/rng.js';
 import { key } from '/shared/grid.js';
-import { tileTexture, cliffTexture } from './textures.js';
+import { tileTextures, cliffTexture } from './textures.js';
+import { buildRocks, buildDecor } from './props.js';
+import { makeCaustics } from './water.js';
 
-const TILE_TINTS = ['#5f9a8c', '#548a84', '#6aa392', '#4c7d7c', '#5b9480', '#63908f'];
-const ROCK_TINTS = ['#66798c', '#54677a', '#74889a', '#5c747c'];
-const WEED_TINTS = ['#3fae5a', '#2f9450', '#5cc46a', '#2a8a66'];
-const CORAL_TINTS = ['#ff7a8a', '#ff9e58', '#c77dff', '#ffd166', '#58d6ff'];
+const STONE_TINTS = ['#6f9cae', '#6691a5', '#7ba7b4'];
+const MOSS_TINTS = ['#5aa886', '#4f9c7c', '#66b390'];
+const ROCK_FLOOR_TINT = '#4f6c7a';
 
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
+const mossColor = new THREE.Color();
 
-function instanced(geometry, count) {
-  const material = new THREE.MeshLambertMaterial({ flatShading: true });
-  const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, count));
-  mesh.count = 0;
-  mesh.frustumCulled = false; // instansene flyttes etter opprettelse
-  return mesh;
-}
-
-function place(mesh, pos, scale, rotY, tint, tilt = 0) {
-  dummy.position.copy(pos);
-  dummy.scale.copy(scale);
-  dummy.rotation.set(tilt, rotY, tilt * 0.6);
-  dummy.updateMatrix();
-  mesh.setMatrixAt(mesh.count, dummy.matrix);
-  mesh.setColorAt(mesh.count, color.set(tint));
-  mesh.count += 1;
-}
-
+// Sokkelen brettet hviler på. Fargen tones mot svart nedover, så den forsvinner i dypet.
 function buildBase(size, rng) {
   const cliff = cliffTexture(rng);
   cliff.repeat.set(size, 1);
-  const side = new THREE.MeshLambertMaterial({ map: cliff });
-  const top = new THREE.MeshLambertMaterial({ color: '#0d2530' });
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(size + 0.3, 1.3, size + 0.3),
-    [side, side, top, top, side, side],
-  );
-  base.position.y = -0.75;
+  const geometry = new THREE.BoxGeometry(size + 0.3, 2.6, size + 0.3);
+  const pos = geometry.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const shade = pos.getY(i) > 0 ? 1 : 0.06;
+    colors.set([shade, shade, shade * 1.4], i * 3);
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const side = new THREE.MeshLambertMaterial({ map: cliff, vertexColors: true });
+  const top = new THREE.MeshLambertMaterial({ color: '#0b222c' });
+  const base = new THREE.Mesh(geometry, [side, side, top, top, side, side]);
+  base.position.y = -1.4;
   return base;
 }
 
+// Grov støy som gjør at mose og stein ligger i flekker over brettet i stedet for som konfetti.
+function patchNoise(size, rng) {
+  const step = 3;
+  const cols = Math.ceil(size / step) + 2;
+  const grid = Array.from({ length: cols * cols }, () => rng.next());
+  return (x, y) => {
+    const gx = x / step;
+    const gy = y / step;
+    const x0 = Math.floor(gx);
+    const y0 = Math.floor(gy);
+    const at = (cx, cy) => grid[cy * cols + cx];
+    const top = THREE.MathUtils.lerp(at(x0, y0), at(x0 + 1, y0), gx - x0);
+    const bottom = THREE.MathUtils.lerp(at(x0, y0 + 1), at(x0 + 1, y0 + 1), gx - x0);
+    return THREE.MathUtils.lerp(top, bottom, gy - y0);
+  };
+}
+
+// Flisene deles på fire nett, ett per teksturvariant.
 function buildTiles(stage, board, rng) {
   const { size } = board;
-  const material = new THREE.MeshLambertMaterial({ map: tileTexture(rng) });
-  const tiles = new THREE.InstancedMesh(new THREE.BoxGeometry(0.94, 0.14, 0.94), material, size * size);
-  let i = 0;
+  const geometry = new THREE.BoxGeometry(0.94, 0.16, 0.94);
+  const meshes = tileTextures(rng).map((map) => {
+    const mesh = new THREE.InstancedMesh(geometry, new THREE.MeshLambertMaterial({ map }), size * size);
+    mesh.count = 0;
+    mesh.frustumCulled = false;
+    mesh.receiveShadow = true;
+    return mesh;
+  });
+  const moss = patchNoise(size, rng);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const rock = board.rocks.has(key(x, y));
-      dummy.position.copy(stage.cellToWorld(x, y, -0.07 - rng.next() * 0.035));
+      const mossiness = THREE.MathUtils.smoothstep(moss(x, y), 0.35, 0.7);
+      const variant = mossiness > 0.6 ? 2 : rng.pick([0, 0, 1, 3]);
+      const mesh = meshes[rock ? 0 : variant];
+      color.set(rng.pick(STONE_TINTS)).lerp(mossColor.set(rng.pick(MOSS_TINTS)), mossiness);
+      if (rock) color.set(ROCK_FLOOR_TINT);
+      dummy.position.copy(stage.cellToWorld(x, y, -0.08 - rng.next() * 0.05));
       dummy.rotation.set(0, rng.int(4) * (Math.PI / 2), 0);
-      dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
-      tiles.setMatrixAt(i, dummy.matrix);
-      tiles.setColorAt(i, color.set(rock ? '#3c5a66' : rng.pick(TILE_TINTS)));
-      i += 1;
+      mesh.setMatrixAt(mesh.count, dummy.matrix);
+      mesh.setColorAt(mesh.count, color);
+      mesh.count += 1;
     }
   }
-  return tiles;
-}
-
-// Hvert fjell er en hovedtopp med et par mindre topper rundt.
-function buildRocks(stage, board, rng) {
-  const rocks = instanced(new THREE.ConeGeometry(0.5, 1, 6), board.rockList.length * 3);
-  for (const [x, y] of board.rockList) {
-    const centre = stage.cellToWorld(x, y);
-    const height = 1.0 + rng.next() * 0.8;
-    const jitter = () => (rng.next() - 0.5) * 0.16;
-    place(rocks, new THREE.Vector3(centre.x + jitter(), height / 2 - 0.02, centre.z + jitter()),
-      new THREE.Vector3(0.9, height, 0.9), rng.next() * 6, rng.pick(ROCK_TINTS), jitter() * 0.6);
-    for (let i = 0; i < 2; i++) {
-      const h = 0.45 + rng.next() * 0.45;
-      const angle = rng.next() * Math.PI * 2;
-      place(rocks, new THREE.Vector3(centre.x + Math.cos(angle) * 0.28, h / 2 - 0.02, centre.z + Math.sin(angle) * 0.28),
-        new THREE.Vector3(0.5, h, 0.5), rng.next() * 6, rng.pick(ROCK_TINTS), jitter());
-    }
-  }
-  return rocks;
-}
-
-// Tang, koraller og småstein i hjørnene av åpne ruter. Ren pynt uten regelbetydning.
-function buildDecor(stage, board, rng) {
-  const cells = board.size * board.size;
-  const weeds = instanced(new THREE.ConeGeometry(0.05, 0.5, 4), cells);
-  const corals = instanced(new THREE.IcosahedronGeometry(0.08, 0), cells);
-  const pebbles = instanced(new THREE.DodecahedronGeometry(0.07, 0), cells);
-  const weedInfo = [];
-  for (let y = 0; y < board.size; y++) {
-    for (let x = 0; x < board.size; x++) {
-      const rock = board.rocks.has(key(x, y));
-      const roll = rng.next();
-      if (roll > (rock ? 0.5 : 0.3)) continue;
-      const centre = stage.cellToWorld(x, y);
-      const corner = new THREE.Vector3(centre.x + (rng.int(2) ? 0.3 : -0.3), 0, centre.z + (rng.int(2) ? 0.3 : -0.3));
-      for (let i = 0; i < 3 && mesh(roll, weeds, corals, pebbles).count < cells; i++) {
-        const target = mesh(roll, weeds, corals, pebbles);
-        const pos = corner.clone().add(new THREE.Vector3((rng.next() - 0.5) * 0.2, 0, (rng.next() - 0.5) * 0.2));
-        if (target === weeds) {
-          const h = 0.6 + rng.next() * 0.9;
-          pos.y = h * 0.25;
-          weedInfo.push({ index: weeds.count, pos, h, phase: rng.next() * 6 });
-          place(weeds, pos, new THREE.Vector3(1, h, 1), 0, rng.pick(WEED_TINTS));
-        } else if (target === corals) {
-          const s = 0.7 + rng.next() * 0.9;
-          pos.y = 0.06 * s;
-          place(corals, pos, new THREE.Vector3(s, s * 1.3, s), rng.next() * 6, rng.pick(CORAL_TINTS));
-        } else {
-          pos.y = 0.03;
-          place(pebbles, pos, new THREE.Vector3(1.2, 0.7, 1), rng.next() * 6, rng.pick(ROCK_TINTS));
-        }
-      }
-    }
-  }
-  return { weeds, corals, pebbles, weedInfo };
-}
-
-function mesh(roll, weeds, corals, pebbles) {
-  if (roll < 0.14) return weeds;
-  return roll < 0.22 ? corals : pebbles;
+  return meshes;
 }
 
 export function buildTerrain(stage, board, seed) {
   const rng = makeRng(seed ^ 0x5eabed);
   const group = new THREE.Group();
+  const caustics = makeCaustics(board.size);
   const decor = buildDecor(stage, board, rng);
-  group.add(buildBase(board.size, rng), buildTiles(stage, board, rng), buildRocks(stage, board, rng),
-    decor.weeds, decor.corals, decor.pebbles);
+  group.add(
+    buildBase(board.size, rng),
+    ...buildTiles(stage, board, rng),
+    caustics.mesh,
+    buildRocks(stage, board, rng),
+    ...decor.meshes,
+  );
 
-  // Tangen svaier svakt i strømmen.
-  const sway = (time) => {
-    for (const w of decor.weedInfo) {
-      dummy.position.copy(w.pos);
-      dummy.scale.set(1, w.h, 1);
-      dummy.rotation.set(Math.sin(time * 1.3 + w.phase) * 0.18, 0, Math.cos(time * 1.1 + w.phase) * 0.18);
-      dummy.updateMatrix();
-      decor.weeds.setMatrixAt(w.index, dummy.matrix);
-    }
-    decor.weeds.instanceMatrix.needsUpdate = true;
+  const update = (time) => {
+    caustics.update(time);
+    decor.sway(time);
   };
 
   const dispose = () => {
@@ -153,5 +110,5 @@ export function buildTerrain(stage, board, seed) {
     });
     group.removeFromParent();
   };
-  return { group, sway, dispose };
+  return { group, update, dispose, vents: decor.vents, rng };
 }

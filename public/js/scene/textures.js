@@ -14,33 +14,58 @@ function pixelTexture(width, height, draw) {
   return texture;
 }
 
-// Lys steinhelle. Fargen kommer fra instansfargen på flisen, teksturen gir bare struktur.
-export function tileTexture(rng) {
-  return pixelTexture(16, 16, (ctx, w, h) => {
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const shade = 214 + Math.floor(rng.next() * 22);
-        ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
-        ctx.fillRect(x, y, 1, 1);
-      }
+// Lyse steinheller i fire varianter. Fargen kommer fra instansfargen på flisen, teksturen gir
+// bare struktur: 0 = glatt helle, 1 = sprukket, 2 = mosegrodd, 3 = fire små brostein.
+function drawSlab(ctx, rng, x0, y0, w, h) {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const shade = 208 + Math.floor(rng.next() * 26);
+      ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+      ctx.fillRect(x0 + x, y0 + y, 1, 1);
     }
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillRect(0, 0, w, 1);
-    ctx.fillRect(0, 0, 1, h);
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(0, h - 1, w, 1);
-    ctx.fillRect(w - 1, 0, 1, h);
-    ctx.fillStyle = 'rgba(0,0,0,0.16)';
-    for (let i = 0; i < 2; i++) { // sprekker
-      let x = 2 + rng.int(12);
-      let y = 2 + rng.int(12);
-      for (let j = 0; j < 4; j++) {
-        ctx.fillRect(x, y, 1, 1);
-        x += rng.int(3) - 1;
-        y += 1;
-      }
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; // lys kant opp og til venstre
+  ctx.fillRect(x0, y0, w, 1);
+  ctx.fillRect(x0, y0, 1, h);
+  ctx.fillStyle = 'rgba(0,0,0,0.42)'; // mørk kant ned og til høyre
+  ctx.fillRect(x0, y0 + h - 1, w, 1);
+  ctx.fillRect(x0 + w - 1, y0, 1, h);
+}
+
+function drawCracks(ctx, rng, count) {
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  for (let i = 0; i < count; i++) {
+    let x = 2 + rng.int(12);
+    let y = 1 + rng.int(6);
+    for (let j = 0; j < 7; j++) {
+      ctx.fillRect(x, y, 1, 1);
+      x += rng.int(3) - 1;
+      y += 1;
     }
-  });
+  }
+}
+
+function drawMoss(ctx, rng) {
+  for (let i = 0; i < 5; i++) {
+    const cx = 1 + rng.int(13);
+    const cy = 1 + rng.int(13);
+    for (let j = 0; j < 7; j++) {
+      ctx.fillStyle = rng.int(2) ? 'rgba(120,200,120,0.55)' : 'rgba(70,150,95,0.5)';
+      ctx.fillRect(cx + rng.int(3) - 1, cy + rng.int(3) - 1, 1, 1);
+    }
+  }
+}
+
+export function tileTextures(rng) {
+  const variants = [
+    (ctx) => drawSlab(ctx, rng, 0, 0, 16, 16),
+    (ctx) => { drawSlab(ctx, rng, 0, 0, 16, 16); drawCracks(ctx, rng, 2); },
+    (ctx) => { drawSlab(ctx, rng, 0, 0, 16, 16); drawMoss(ctx, rng); },
+    (ctx) => {
+      for (const [x, y] of [[0, 0], [8, 0], [0, 8], [8, 8]]) drawSlab(ctx, rng, x, y, 8, 8);
+    },
+  ];
+  return variants.map((draw) => pixelTexture(16, 16, draw));
 }
 
 // Lagdelt bergvegg til sidene av brettet.
