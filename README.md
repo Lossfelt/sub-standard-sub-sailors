@@ -67,3 +67,19 @@ Ikke med ennå: decoys, strømninger, to dybdenivåer, målsøkende torpedoer og
 Serveren er én prosess som holder alle rom i minnet. Den kan kjøres hvor som helst som støtter
 Node og WebSocket (for eksempel Render): startkommando `npm start`, porten leses fra `PORT`, og
 `/healthz` svarer 200. Starter serveren på nytt, forsvinner pågående spill.
+
+### Publisere på Render
+
+Frontend og WebSocket må ligge på samme adresse (klienten kobler til `/ws` på samme vert), så
+hele spillet kjører som én Render-tjeneste. `render.yaml` i roten beskriver den.
+
+1. Push repoet til GitHub.
+2. I Render: **New > Blueprint**, velg repoet. Render leser `render.yaml` og oppretter tjenesten.
+3. Når deployen er grønn, åpne `https://<navn>.onrender.com` og del lenken.
+
+Merk:
+
+- Kjør bare én instans. Rom ligger i minnet, så flere instanser ville splittet spillerne.
+- Gratisnivået sover etter en stund uten trafikk, og første besøk tar da lenger tid. Bytt `plan`
+  i `render.yaml` til en betalt plan for å unngå det. Sjekk Renders gjeldende vilkår.
+- Ved ny deploy eller omstart forsvinner pågående spill.

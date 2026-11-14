@@ -1,0 +1,13 @@
+# Render Blueprint. Én Node-tjeneste som serverer klienten og WebSocket-spillet.
+# Rommene ligger i minnet, så tjenesten må kjøre som én instans (ikke skaler ut).
+services:
+  - type: web
+    name: sub-standard-sub-sailors
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
