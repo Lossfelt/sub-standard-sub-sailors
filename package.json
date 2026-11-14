@@ -1,0 +1,21 @@
+{
+  "name": "sub-standard-sub-sailors",
+  "version": "0.1.0",
+  "description": "S.S.S.S. - ubåtspill med skjult informasjon, samtidige trekk og passiv sonar",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@fontsource/pixelify-sans": "^5.0.0",
+    "@fontsource/vt323": "^5.0.0",
+    "three": "^0.170.0",
+    "ws": "^8.18.0"
+  }
+}

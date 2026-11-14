@@ -1,0 +1,209 @@
+#game { display: block; background: radial-gradient(ellipse at 50% 20%, #12314a 0%, #07121f 70%); }
+#game[hidden] { display: none; }
+
+#stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+  color: var(--text);
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  white-space: nowrap;
+}
+.label.compass { color: var(--dim); font-size: 1.1rem; }
+.label.contact { color: #ffb347; }
+.label.me { color: var(--accent); }
+
+.panel {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  padding: 8px 10px;
+}
+.hud { position: absolute; z-index: 2; }
+
+.top-left { top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; min-width: 170px; }
+.round-line { display: flex; justify-content: space-between; gap: 12px; }
+#clock { color: var(--accent); }
+#clock.urgent { color: var(--danger); }
+.hull.ok { color: var(--ok); }
+.hull.damaged { color: var(--danger); animation: blink 0.8s steps(2) infinite; }
+.hull.sunk { color: var(--dim); }
+@keyframes blink { 50% { opacity: 0.55; } }
+
+.tools { display: flex; gap: 4px; }
+.icon-btn {
+  font: inherit;
+  width: 34px;
+  height: 34px;
+  color: var(--text);
+  background: #163650;
+  border: 2px solid var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.icon-btn:hover { background: #1d4667; }
+.icon-btn.off { color: var(--dim); text-decoration: line-through; }
+
+.top-right { top: 8px; right: 8px; max-width: 46vw; }
+.player-list.compact { font-size: 0.95rem; gap: 1px; }
+.player-list.compact .dot { width: 11px; height: 11px; }
+
+.log {
+  left: 8px;
+  top: 112px;
+  width: min(280px, 34vw);
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 6px 8px;
+}
+#log { list-style: none; margin: 0; padding: 0; font-size: 0.92rem; line-height: 1.15; }
+#log li { margin: 0 0 3px; color: var(--dim); }
+#log li.new { color: var(--text); }
+#log li.bad { color: var(--danger); }
+#log li.good { color: var(--ok); }
+#log li.sonar { color: #ffb347; }
+#log li.round { color: var(--cyan); margin-top: 5px; }
+
+/* Brede skjermer: ordrepanelet er en lav stripe nederst, slik at brettet får resten av flaten. */
+.orders {
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: min(860px, calc(100vw - 16px));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'helm actions send' 'helm hint send';
+  gap: 6px 14px;
+  align-items: center;
+}
+.helm { grid-area: helm; }
+.actions { grid-area: actions; }
+#hint { grid-area: hint; }
+#send { grid-area: send; align-self: stretch; min-width: 130px; }
+.orders[hidden] { display: none; }
+.orders.locked .helm, .orders.locked .actions { opacity: 0.45; pointer-events: none; }
+
+.helm { display: flex; align-items: center; gap: 12px; }
+.dpad {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  flex: none;
+}
+.pad {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text);
+  background: #163650;
+  border: 2px solid var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+  padding: 0;
+}
+.pad.nw { left: 0; top: 0; }
+.pad.ne { right: 0; top: 0; }
+.pad.sw { left: 0; bottom: 0; }
+.pad.se { right: 0; bottom: 0; }
+.pad.hold { left: 34px; top: 34px; width: 40px; height: 40px; border-radius: 50%; z-index: 1; }
+.pad.on, .act.on { background: #a87f0c; border-color: var(--accent); color: #fff; }
+.pad:disabled, .act:disabled { opacity: 0.35; cursor: not-allowed; }
+.pad small { display: block; font-size: 0.7rem; color: var(--dim); }
+.pad.on small { color: #fff; }
+
+.readout { font-size: 1rem; line-height: 1.2; }
+#noise { color: var(--dim); }
+
+.actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.act {
+  font: inherit;
+  color: var(--text);
+  background: #163650;
+  border: 2px solid var(--line);
+  padding: 7px 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.act:hover:not(:disabled), .pad:hover:not(:disabled) { background: #1d4667; }
+.act.on:hover:not(:disabled), .pad.on:hover:not(:disabled) { background: #c2940f; }
+
+.banner {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100% - 24px));
+  text-align: center;
+  background: var(--panel);
+  border: 3px solid var(--accent);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  padding: 18px;
+}
+.banner[hidden] { display: none; }
+.banner p { margin: 0 0 12px; }
+.banner-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.banner-buttons [hidden] { display: none; }
+/* Minimert banner: en smal stripe nederst, slik at brettet er synlig. */
+.banner.mini {
+  top: auto;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 12px;
+}
+.banner.mini h2 { font-size: 1.1rem; margin: 0; }
+.banner.mini p, .banner.mini #watch { display: none; }
+
+/* Smale skjermer: loggen blir en stripe over ordrepanelet, som fyller bunnen. */
+@media (max-width: 760px) {
+  :root { font-size: 18px; }
+  .orders {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    width: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions { grid-template-columns: 1fr 1fr; }
+  .log {
+    left: 6px;
+    right: 6px;
+    top: auto;
+    width: auto;
+    bottom: calc(var(--orders-height, 250px) + 12px);
+    max-height: 3.6em;
+  }
+  .log.open { max-height: 40vh; }
+  .top-left { min-width: 0; max-width: 56vw; }
+  .top-right { max-width: 40vw; }
+  .top-right .tag { display: none; }
+  .icon-btn { width: 30px; height: 30px; }
+  .dpad { width: 96px; height: 96px; }
+  .pad { width: 41px; height: 41px; }
+  .pad.hold { left: 30px; top: 30px; width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hull.damaged { animation: none; }
+}
