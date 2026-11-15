@@ -15,6 +15,10 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
   - Ikoner på handlingsknappene, og en penere lobby
   - Kameraet følger egen ubåt mykt når man er zoomet inn, og en knapp for "finn meg"
 
+## Ny tanke fra Levin
+
+- Kanskje man ikke skal kunne stå stille, men alltid må ha minimum 1 i hastighet i en retning, slik at spillerne ikke bare venter i hvert sitt hjørne av brettet.
+
 ## Fra idédokumentet
 
 - **Decoys.** Ubåten slipper en lokkedue som begynner å lage ubåtlyd etter et valgt antall runder.
