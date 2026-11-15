@@ -1,20 +1,21 @@
-// Liv i vannet: små fiskestimer som sirkler over brettet, og bobler som stiger fra bunnen.
+// Liv i vannet: små fiskestimer som sirkler over brettet, bobler som stiger fra bunnen og
+// røyk fra de undersjøiske vulkanene.
 // Ren stemning, uten betydning for spillet.
 import * as THREE from 'three';
 
 const FISH_TINTS = ['#ffb347', '#ff8a7a', '#d5ecf5', '#8fe3c8'];
-const BUBBLES_PER_VENT = 4;
-const BUBBLE_TOP = 3.2;
+const BUBBLES = { count: 4, top: 3.2, speed: 0.5, color: '#bfe9f7', size: 1, opacity: 0.7, spread: 0.09 };
+const SMOKE = { count: 9, top: 2.4, speed: 0.35, color: '#565c68', size: 3, opacity: 0.8, spread: 0.16 };
 
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
 
 export class Life {
-  constructor(stage, vents, rng) {
+  constructor(stage, vents, smokers, rng) {
     this.stage = stage;
     this.fish = this.makeFish(rng);
-    this.bubbles = this.makeBubbles(vents, rng);
-    stage.scene.add(this.fish.mesh, this.bubbles.points);
+    this.plumes = [this.makePlume(vents, BUBBLES, rng), this.makePlume(smokers, SMOKE, rng)];
+    stage.scene.add(this.fish.mesh, ...this.plumes.map((plume) => plume.points));
   }
 
   makeFish(rng) {
@@ -43,24 +44,25 @@ export class Life {
     return { mesh, swimmers };
   }
 
-  makeBubbles(vents, rng) {
-    const count = vents.length * BUBBLES_PER_VENT;
+  // En sky av punkter som stiger fra hvert utgangspunkt og begynner på nytt når de når toppen.
+  makePlume(sources, style, rng) {
+    const count = sources.length * style.count;
     const positions = new Float32Array(Math.max(1, count) * 3);
     const info = [];
-    for (const vent of vents) {
-      for (let i = 0; i < BUBBLES_PER_VENT; i++) {
-        info.push({ vent, offset: rng.next() * BUBBLE_TOP, speed: 0.5 + rng.next() * 0.5, phase: rng.next() * 6 });
+    for (const source of sources) {
+      for (let i = 0; i < style.count; i++) {
+        info.push({ source, offset: rng.next() * style.top, speed: style.speed * (1 + rng.next()), phase: rng.next() * 6 });
       }
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setDrawRange(0, count);
     const material = new THREE.PointsMaterial({
-      color: '#bfe9f7', size: 1, sizeAttenuation: false, transparent: true, opacity: 0.7, depthWrite: false,
+      color: style.color, size: style.size, sizeAttenuation: false, transparent: true, opacity: style.opacity, depthWrite: false,
     });
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false;
-    return { points, info };
+    return { points, info, style };
   }
 
   update(time) {
@@ -82,21 +84,23 @@ export class Life {
     });
     this.fish.mesh.instanceMatrix.needsUpdate = true;
 
-    const pos = this.bubbles.points.geometry.attributes.position;
-    this.bubbles.info.forEach((b, i) => {
-      const y = (b.offset + time * b.speed) % BUBBLE_TOP;
-      pos.setXYZ(
-        i,
-        b.vent.x + Math.sin(time * 2 + b.phase) * 0.09 * (1 + y),
-        y,
-        b.vent.z + Math.cos(time * 1.7 + b.phase) * 0.09 * (1 + y),
-      );
-    });
-    pos.needsUpdate = true;
+    for (const { points, info, style } of this.plumes) {
+      const pos = points.geometry.attributes.position;
+      info.forEach((b, i) => {
+        const rise = (b.offset + time * b.speed) % style.top;
+        pos.setXYZ(
+          i,
+          b.source.x + Math.sin(time * 2 + b.phase) * style.spread * (1 + rise),
+          b.source.y + rise,
+          b.source.z + Math.cos(time * 1.7 + b.phase) * style.spread * (1 + rise),
+        );
+      });
+      pos.needsUpdate = true;
+    }
   }
 
   dispose() {
-    for (const obj of [this.fish.mesh, this.bubbles.points]) {
+    for (const obj of [this.fish.mesh, ...this.plumes.map((plume) => plume.points)]) {
       obj.geometry.dispose();
       obj.material.dispose();
       obj.removeFromParent();

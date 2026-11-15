@@ -16,6 +16,7 @@ export class Hud {
     this.pads = [...document.querySelectorAll('.pad')];
     this.acts = [...document.querySelectorAll('.act')];
     this.deadline = null;
+    this.entries = []; // loggen som data, slik at den kan lagres og gjenopprettes
     this.pads.forEach((b) => b.addEventListener('click', () => handlers.onPad(b.dataset.slot)));
     this.acts.forEach((b) => b.addEventListener('click', () => handlers.onAction(b.dataset.action)));
     this.el.send.addEventListener('click', () => handlers.onSend());
@@ -157,6 +158,8 @@ export class Hud {
   }
 
   log(text, kind = '') {
+    this.entries.push({ text, kind });
+    if (this.entries.length > MAX_LOG_LINES) this.entries.shift();
     const li = document.createElement('li');
     li.className = `new ${kind}`;
     li.textContent = text;
@@ -171,7 +174,15 @@ export class Hud {
   }
 
   clearLog() {
+    this.entries = [];
     this.el.log.replaceChildren();
+  }
+
+  // Legger tilbake en lagret logg, for eksempel etter gjenoppkobling.
+  restoreLog(entries) {
+    this.clearLog();
+    for (const { text, kind } of entries) this.log(text, kind);
+    for (const li of this.el.log.children) li.classList.remove('new');
   }
 
   // canLeave: om knappen tilbake til lobbyen skal vises (verten underveis, alle etter spillet).

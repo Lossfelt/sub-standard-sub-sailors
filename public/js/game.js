@@ -40,13 +40,51 @@ export class Game {
     this.queue = Promise.resolve();
     this.backlog = 0;
     this.cursor = null;
-    this.hud.clearLog();
+    this.memoryKey = `ssss-memory-${msg.seed}`;
+    this.playedRound = 0; // siste runde som er ferdig avspilt i denne nettleseren
     this.hud.hideBanner();
-    this.hud.log(`Brettet er ${this.board.size} × ${this.board.size} ruter. Dra i brettet for å flytte utsnittet, rull for å zoome.`);
-    this.hud.log('God jakt, kaptein.');
+    if (!this.loadMemory()) {
+      this.hud.clearLog();
+      this.hud.log(`Brettet er ${this.board.size} × ${this.board.size} ruter. Dra i brettet for å flytte utsnittet, rull for å zoome.`);
+      this.hud.log('God jakt, kaptein.');
+    }
     this.applyView();
+    // Kom siste runde aldri ferdig avspilt her (f.eks. fordi telefonen sovnet), spilles den av
+    // i hurtigfart nå, slik at kontakter og logg fra den ikke går tapt.
+    const missed = msg.lastReport && msg.lastReport.round > this.playedRound ? msg.lastReport : null;
+    const sunkNow = new Set((missed?.sunk ?? []).map((w) => w.id));
+    for (const w of msg.wrecks ?? []) if (!sunkNow.has(w.id)) this.world.addWreck(w.id, w.x, w.y);
+    if (missed) {
+      this.beginRound();
+      this.onRound({ report: missed, view: msg.view, over: msg.over }, true);
+      return;
+    }
     this.beginRound();
     if (msg.over) showGameOver(this, msg.over);
+  }
+
+  // Det spilleren har hørt og sett finnes bare i nettleseren. Det lagres per spill, slik at
+  // logg og kontakter overlever gjenoppkobling og sideoppfrisking.
+  saveMemory() {
+    try {
+      this.playedRound = this.view.round;
+      const memory = { round: this.playedRound, contacts: this.contacts, booms: this.booms, log: this.hud.entries };
+      sessionStorage.setItem(this.memoryKey, JSON.stringify(memory));
+    } catch { /* uten lagring mister man bare historikken ved gjenoppkobling */ }
+  }
+
+  loadMemory() {
+    try {
+      const memory = JSON.parse(sessionStorage.getItem(this.memoryKey));
+      if (!memory) return false;
+      this.playedRound = memory.round;
+      this.contacts = memory.contacts;
+      this.booms = memory.booms;
+      this.hud.restoreLog(memory.log);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   stop() {
@@ -141,7 +179,7 @@ export class Game {
     const { type, x, y } = this.order.action;
     const placed = x != null;
     markers.clearSelection();
-    const targets = torpedoes.map((t) => [t.tx, t.ty]);
+    const targets = torpedoes.filter((t) => t.mine).map((t) => [t.tx, t.ty]);
     let hint = HINTS[type];
     if (type === 'focus') {
       if (placed) markers.set('area', areaCells(this.board.size, x, y));
@@ -249,14 +287,14 @@ export class Game {
   }
 
   // Rundene spilles av én om gangen, også når serveren sender dem tett (tilskuermodus).
-  onRound(msg) {
+  onRound(msg, fast = false) {
     if (!this.world) return;
     const { world } = this;
     this.backlog += 1;
     this.queue = this.queue
       .then(() => {
         if (this.world !== world) return null;
-        world.effects.speed = this.backlog > 1 ? 6 : 1;
+        world.effects.speed = fast ? 40 : this.backlog > 1 ? 6 : 1;
         return playRound(this, msg);
       })
       .finally(() => { this.backlog -= 1; })

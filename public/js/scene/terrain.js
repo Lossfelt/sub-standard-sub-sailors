@@ -86,12 +86,13 @@ export function buildTerrain(stage, board, seed) {
   const rng = makeRng(seed ^ 0x5eabed);
   const group = new THREE.Group();
   const caustics = makeCaustics(board.size);
+  const rocks = buildRocks(stage, board, rng);
   const decor = buildDecor(stage, board, rng);
   group.add(
     buildBase(board.size, rng),
     ...buildTiles(stage, board, rng),
     caustics.mesh,
-    buildRocks(stage, board, rng),
+    ...rocks.meshes,
     ...decor.meshes,
   );
 
@@ -110,5 +111,5 @@ export function buildTerrain(stage, board, seed) {
     });
     group.removeFromParent();
   };
-  return { group, update, dispose, vents: decor.vents, rng };
+  return { group, update, dispose, vents: decor.vents, smokers: rocks.smokers, rng };
 }

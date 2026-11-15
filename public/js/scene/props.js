@@ -5,7 +5,8 @@ import { key } from '/shared/grid.js';
 
 const ROCK_TINTS = ['#ffffff', '#e4edf2', '#d6e2ea', '#f1eee2'];
 const WEED_TINTS = ['#3fae5a', '#2f9450', '#5cc46a', '#2a8a66'];
-const CORAL_TINTS = ['#ff7a8a', '#ff9e58', '#c77dff', '#ffd166'];
+const CORAL_TINTS = ['#e8788a', '#e89a5c', '#b07fe0', '#e6c36a'];
+const STARFISH_TINTS = ['#e8724a', '#d9566e', '#e6a64a'];
 const PEBBLE_TINTS = ['#8fa3b0', '#7b8f9c', '#a3b3ba'];
 const CRYSTAL_TINTS = ['#7df9ff', '#b388ff', '#8dffb0'];
 
@@ -57,14 +58,58 @@ function rockGeometry() {
   return geometry;
 }
 
-// Hvert fjell er en hovedtopp med et par mindre topper rundt.
+// Skorstein til en undersjøisk vulkan ("smoker"): mørk basalt som gløder mot toppen.
+function chimneyGeometry() {
+  const geometry = new THREE.CylinderGeometry(0.16, 0.42, 1, 7, 3);
+  const pos = geometry.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const low = new THREE.Color('#23262e');
+  const top = new THREE.Color('#9a4a26');
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const h = y + 0.5;
+    const hash = Math.sin(x * 71.3 + y * 37.9 + z * 53.7) * 43758.5;
+    const jitter = hash - Math.floor(hash);
+    if (h > 0.01 && h < 0.99) pos.setXYZ(i, x * (0.85 + jitter * 0.35), y, z * (0.85 + jitter * 0.35));
+    color.copy(low).lerp(top, h * h * h);
+    colors.set([color.r, color.g, color.b], i * 3);
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+const SMOKER_SHARE = 0.35; // andel av fjellrutene som i stedet er vulkaner. Samme regler, annet utseende.
+
+// Fjellruter er enten et fjell (hovedtopp med småtopper rundt) eller en rykende vulkan.
 export function buildRocks(stage, board, rng) {
-  const material = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  const rocks = instanced(rockGeometry(), material, board.rockList.length * 4);
+  const rockMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  const count = board.rockList.length;
+  const rocks = instanced(rockGeometry(), rockMat, count * 4);
+  const chimneys = instanced(chimneyGeometry(), rockMat.clone(), count * 3);
+  // Glødende åpning på toppen av skorsteinen. Lyser av seg selv.
+  const glow = instanced(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 7), new THREE.MeshBasicMaterial(), count * 3);
   rocks.castShadow = true;
+  chimneys.castShadow = true;
+  const smokers = [];
   const jitter = () => (rng.next() - 0.5) * 0.16;
+  const one = new THREE.Vector3(1, 1, 1);
   for (const [x, y] of board.rockList) {
     const centre = stage.cellToWorld(x, y);
+    if (rng.chance(SMOKER_SHARE)) {
+      for (let i = 0; i < 1 + rng.int(2); i++) {
+        const h = i === 0 ? 0.75 + rng.next() * 0.45 : 0.35 + rng.next() * 0.25;
+        const width = i === 0 ? 1 : 0.6;
+        const px = centre.x + (i === 0 ? jitter() : (rng.int(2) ? 0.28 : -0.28));
+        const pz = centre.z + (i === 0 ? jitter() : (rng.int(2) ? 0.28 : -0.28));
+        place(chimneys, new THREE.Vector3(px, h / 2 - 0.03, pz), new THREE.Vector3(width, h, width), rng.next() * 6, '#ffffff');
+        place(glow, new THREE.Vector3(px, h - 0.04, pz), one.clone().multiplyScalar(width), 0, rng.pick(['#ff8a3d', '#ffb347', '#ff6a3d']));
+        smokers.push(new THREE.Vector3(px, h, pz));
+      }
+      continue;
+    }
     const height = 1.1 + rng.next() * 0.9;
     place(rocks, new THREE.Vector3(centre.x + jitter(), height / 2 - 0.03, centre.z + jitter()),
       new THREE.Vector3(0.95, height, 0.95), rng.next() * 6, rng.pick(ROCK_TINTS), jitter() * 0.5);
@@ -75,16 +120,29 @@ export function buildRocks(stage, board, rng) {
       place(rocks, pos, new THREE.Vector3(0.5, h, 0.5), rng.next() * 6, rng.pick(ROCK_TINTS), jitter());
     }
   }
-  return rocks;
+  return { meshes: [rocks, chimneys, glow], smokers };
 }
 
 const lit = () => new THREE.MeshLambertMaterial({ flatShading: true });
+
+// Flat femtakket sjøstjerne som ligger på bunnen.
+function starfishGeometry() {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 ? 0.05 : 0.13;
+    const angle = (i / 10) * Math.PI * 2;
+    shape[i ? 'lineTo' : 'moveTo'](Math.cos(angle) * radius, Math.sin(angle) * radius);
+  }
+  return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+}
 
 // Pynt i hjørnene av rutene. Returnerer også hvor det bobler opp fra bunnen.
 export function buildDecor(stage, board, rng) {
   const cells = board.size * board.size;
   const weeds = instanced(new THREE.ConeGeometry(0.06, 0.5, 4), lit(), cells);
-  const corals = instanced(new THREE.IcosahedronGeometry(0.09, 0), lit(), cells);
+  // Rørkoraller: små klynger av stående rør i ulik høyde.
+  const corals = instanced(new THREE.CylinderGeometry(0.035, 0.05, 0.3, 5), lit(), cells);
+  const starfish = instanced(starfishGeometry(), lit(), cells);
   const pebbles = instanced(new THREE.DodecahedronGeometry(0.08, 0), lit(), cells);
   // Krystallene lyser av seg selv og påvirkes ikke av lyset i scenen.
   const crystals = instanced(new THREE.OctahedronGeometry(0.07, 0), new THREE.MeshBasicMaterial(), cells);
@@ -100,6 +158,7 @@ export function buildDecor(stage, board, rng) {
       if (!rock && roll > 0.975) vents.push(centre.clone());
       if (roll > (rock ? 0.55 : 0.34)) continue;
       const corner = new THREE.Vector3(centre.x + (rng.int(2) ? 0.3 : -0.3), 0, centre.z + (rng.int(2) ? 0.3 : -0.3));
+      let tint = null;
       for (let i = 0; i < 3; i++) {
         const pos = corner.clone().add(new THREE.Vector3((rng.next() - 0.5) * 0.22, 0, (rng.next() - 0.5) * 0.22));
         if (roll < 0.15) {
@@ -108,14 +167,18 @@ export function buildDecor(stage, board, rng) {
           weedInfo.push({ index: weeds.count, pos, h, phase: rng.next() * 6 });
           place(weeds, pos, new THREE.Vector3(1, h, 1), 0, rng.pick(WEED_TINTS));
         } else if (roll < 0.23) {
-          const s = 0.8 + rng.next() * 1.0;
-          pos.y = 0.07 * s;
-          place(corals, pos, new THREE.Vector3(s, s * 1.4, s), rng.next() * 6, rng.pick(CORAL_TINTS));
+          const h = 0.5 + rng.next() * 0.9;
+          pos.y = 0.15 * h;
+          if (i === 0) tint = rng.pick(CORAL_TINTS); // hele klyngen har samme farge
+          place(corals, pos, new THREE.Vector3(1, h, 1), rng.next() * 6, tint);
         } else if (roll < 0.27 && i < 2) {
           const s = 0.8 + rng.next() * 0.9;
           pos.y = 0.08 * s;
           place(crystals, pos, new THREE.Vector3(s * 0.7, s * 1.6, s * 0.7), rng.next() * 6, rng.pick(CRYSTAL_TINTS));
-        } else if (roll >= 0.27) {
+        } else if (roll >= 0.27 && roll < 0.295) {
+          pos.y = 0.012;
+          if (i === 0) place(starfish, pos, new THREE.Vector3(1, 1, 1), rng.next() * 6, rng.pick(STARFISH_TINTS));
+        } else if (roll >= 0.295) {
           pos.y = 0.03;
           place(pebbles, pos, new THREE.Vector3(1.2, 0.7, 1), rng.next() * 6, rng.pick(PEBBLE_TINTS));
         }
@@ -134,5 +197,5 @@ export function buildDecor(stage, board, rng) {
     }
     weeds.instanceMatrix.needsUpdate = true;
   };
-  return { meshes: [weeds, corals, pebbles, crystals], sway, vents };
+  return { meshes: [weeds, corals, starfish, pebbles, crystals], sway, vents };
 }

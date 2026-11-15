@@ -6,10 +6,7 @@ import { cellName, SUNK_CAUSE } from './texts.js';
 async function playMovement(game, report) {
   const { world, hud } = game;
   const tasks = report.torpedoTracks.map((track) => world.moveTorpedo(track));
-  if (report.action === 'fire') {
-    play('launch', 0.7);
-    hud.log('Torpedo ute! Den armeres neste runde.');
-  }
+  if (report.action === 'fire') play('launch', 0.7);
   if (report.move?.path.length) {
     play('engine', 0.3);
     tasks.push(world.moveSub(report.move));
@@ -46,9 +43,13 @@ async function playExplosions(game, report) {
   if (report.hit) {
     world.stage.shake = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.9;
     play('hull_hit', 0.9);
-    hud.log(report.hit === 'direct'
-      ? 'Direkte treff. Vann overalt. Det var det.'
-      : 'Vi er truffet! Skroget lekker. Reparer to ganger innen tre runder, ellers synker vi.', 'bad');
+    const messages = {
+      direct: 'Direkte treff. Vann overalt. Det var det.',
+      indirect: 'Vi er truffet! Skroget lekker. Reparer to ganger innen tre runder, ellers synker vi.',
+      collision: `KRASJ! Vi kolliderte med en annen ubåt i ${cellName(report.collision?.x, report.collision?.y)}. Skroget lekker, reparer to ganger innen tre runder.`,
+    };
+    hud.log(messages[report.hit], 'bad');
+    if (report.collision) game.contacts.push({ x: report.collision.x, y: report.collision.y, round: report.round });
   }
 }
 
@@ -106,7 +107,6 @@ async function playSonar(game, report) {
     hud.log(`Sonar: kontakt i ${cellName(c.x, c.y)}.`, 'sonar');
   }
   if (report.contacts.length) play('contact', 0.7);
-  else if (report.action && !report.focus) hud.log('Sonar: ingenting å høre.');
   await effects.wait(0.35);
 }
 
@@ -149,4 +149,5 @@ export async function playRound(game, msg) {
   }
   if (msg.over) showGameOver(game, msg.over);
   game.beginRound();
+  game.saveMemory();
 }

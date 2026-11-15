@@ -23,6 +23,7 @@ export const SUNK_CAUSE = {
   direct: 'fikk et direkte treff og sank',
   second: 'ble truffet en gang til og sank',
   flooding: 'rakk ikke å reparere og sank',
+  collision: 'kolliderte med skadet skrog og sank',
 };
 
 export const RULES_HTML = `
@@ -40,11 +41,22 @@ export const RULES_HTML = `
 <li>Torpedoskudd, eksplosjoner og senkninger høres av alle.</li></ul>
 <h3>Torpedo</h3>
 <ul><li>Sikt på en rute minst ${T.minRange} ruter unna. Torpedoen går ${T.speed} ruter per runde og blir liggende ved målet.</li>
-<li>Den er uarmert runden den skytes ut, og leter deretter i ${T.armedRounds} runder.</li>
-<li>Ubåt i samme rute treffes alltid. Ubåt i naborute treffes med ${T.proximityHitChance * 100} % sjanse. Den bryr seg ikke om hvem som skjøt.</li>
+<li>Den armeres først når den når den tredje ruten på banen sin. I de to første rutene kan den ikke treffe noen, heller ikke deg. Den varer i ${T.armedRounds} runder.</li>
+<li>Alle ser hvor alle torpedoer er (rød, pulserende ring), men ikke hvem som skjøt eller hvor de skal.</li>
+<li>Ubåt i samme rute treffes alltid. Ubåt i naborute treffes med ${T.proximityHitChance * 100} % sjanse. Når den er armert bryr den seg ikke om hvem som skjøt, så ikke kjør etter din egen torpedo.</li>
 <li>${T.directHitShare * 100} % av treffene er direkte og senker ubåten. Resten gir skade.</li></ul>
 <h3>Skade</h3>
 <ul><li>En skadet ubåt må reparere ${CONFIG.damage.repairsNeeded} ganger i løpet av ${CONFIG.damage.roundsToRepair} runder, ellers synker den.</li>
-<li>Et nytt treff mens du er skadet senker deg.</li></ul>
+<li>Et nytt treff mens du er skadet senker deg.</li>
+<li>Ubåter kan passere gjennom hverandre. Ender to i samme rute er det ${CONFIG.collisionChance * 100} % sjanse for kollisjon, som stopper og skader begge.</li></ul>
+<h3>Tegn på brettet</h3>
+<ul><li><b>Blå ramme:</b> ruten du står i. <b>Gul ramme</b> og gjennomsiktig ubåt: der du havner neste runde.</li>
+<li><b>Oransje ring med diamant:</b> sonarkontakt. Tallet (-1, -2 ...) er hvor mange runder gammel den er, og den blekner med tiden.</li>
+<li><b>Rødt kryss:</b> målet til en av torpedoene dine. <b>Rød, pulserende ring:</b> en torpedo. Sirkler den, ligger den ved målet og leter. Tallet over dine egne er hvor mange runder de har igjen.</li>
+<li><b>Hvitt kryss:</b> en eksplosjon alle hørte, vises i to runder.</li>
+<li><b>Rødlig felt</b> rundt deg når du velger torpedo: for nært til å sikte på. <b>Lyse ruter</b> viser torpedoens bane.</li>
+<li><b>Blått felt:</b> området du fokuserer sonaren på. Etter søket er det <b>oransje</b> hvis det er en ubåt der, gråblått hvis tomt, og <b>mørkt</b> der fjell gir sonarskygge.</li>
+<li><b>Mørk, veltet ubåt:</b> et vrak. <b>Rykende skorsteiner</b> er undersjøiske vulkaner og virker som fjell. Bokstaver og tall langs kanten gir rutenavn som "F7".</li>
+<li>Tang, koraller, sjøstjerner, krystaller, fisk og bobler er bare pynt.</li></ul>
 <h3>Styring</h3>
 <ul><li>Dra i brettet (eller bruk W, A, S, D) for å flytte utsnittet. Rull, knip eller bruk + og - for å zoome. Q og E snur brettet. Piltastene flytter rutemarkøren, mellomrom velger ruten og Enter sender ordre.</li></ul>`;

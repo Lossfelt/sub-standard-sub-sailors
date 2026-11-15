@@ -46,13 +46,16 @@ var åpent for tolkning er dette valgt:
   aksene, så fart 2 øst + 1 nord er nivå 2.
 - **Oppdagelse** er prosentpoeng: støy minus avstand. Skyter du på avstand 10 er sjansen 40 %.
   En kontakt viser nøyaktig rute der ubåten var da runden var ferdig, uten å si hvem det er.
-- **Torpedoen** skytes fra der du står før du flytter deg. Den er uarmert i utskytingsrunden og
-  leter deretter i fem runder. En ubåt i naboruten får ett 50 %-kast per torpedo per runde.
-  Torpedoen skiller ikke mellom venn og fiende, så du kan treffe deg selv.
+- **Torpedoen** skytes fra der du står før du flytter deg. Den armeres når den når den
+  tredje ruten på banen sin (samme avstand som minste sikteavstand), og varer i fem runder. En ubåt i naboruten får ett 50 %-kast per torpedo per runde.
+  Armert skiller den ikke mellom venn og fiende, så du kan treffe deg selv hvis du kjører etter den. Alle ser posisjonen
+  til alle torpedoer, men ikke hvem som skjøt eller hvor de er på vei.
+- **Kollisjon:** ubåter kan passere gjennom hverandre. Ender to i samme rute, og minst én kjørte dit
+  den runden, er det 50 % sjanse for kollisjon. Den stopper begge og skader dem som et indirekte treff.
 - **Eksplosjoner og senkninger** høres av alle med posisjon. Torpedoskudd høres av alle uten
   posisjon, med mindre den passive sonaren også fanger opp ubåten.
 - **Brettkant og fjell** stopper ubåten helt (begge akser).
-- **Fjell** blokkerer bevegelse, gir sonarskygge for både passiv og fokusert sonar, og får
+- **Fjell** (og undersjøiske vulkaner, som bare er et annet utseende) blokkerer bevegelse, gir sonarskygge for både passiv og fokusert sonar, og får
   torpedoer til å eksplodere.
 - **Reparasjon:** runden du blir truffet teller ikke. Av de tre neste rundene må to brukes på å reparere.
 - **Brettet** er 6 + 2 × antall spillere ruter i hver retning, og endres ikke underveis.

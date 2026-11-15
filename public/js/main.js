@@ -46,6 +46,8 @@ const hud = new Hud({
   },
 });
 game = new Game(stage, hud, net);
+// Feilsøkingskrok under lokal utvikling, så scenen kan inspiseres og drives fra konsollen.
+if (['localhost', '127.0.0.1'].includes(location.hostname)) window.ssss = { stage, game };
 
 function openRules() {
   $('rules-body').innerHTML = RULES_HTML; // statisk tekst fra texts.js, ikke brukerinnhold

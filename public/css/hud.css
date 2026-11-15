@@ -22,6 +22,7 @@
   white-space: nowrap;
 }
 .label.compass { color: var(--dim); font-size: 1.1rem; }
+.label.coord { color: var(--dim); font-size: 0.72rem; opacity: 0.85; }
 .label.contact { color: #ffb347; }
 .label.me { color: var(--accent); }
 
@@ -204,11 +205,20 @@
     bottom: 6px;
     width: auto;
     transform: none;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    /* Styreknappene til venstre, fart og handlinger til høyre for dem. */
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'dpad readout' 'dpad actions' 'hint hint' 'send send';
+    gap: 6px 10px;
+    padding: 6px 8px;
   }
-  .actions { grid-template-columns: 1fr 1fr; }
+  .helm { display: contents; }
+  .dpad { grid-area: dpad; }
+  .readout { grid-area: readout; display: flex; gap: 12px; font-size: 0.95rem; }
+  .actions { grid-template-columns: 1fr 1fr; align-self: stretch; }
+  .act { padding: 4px 2px; }
+  #send { padding: 6px 14px; }
+  #game:has(.banner.mini:not([hidden])) .log { bottom: 86px; }
+  .label.coord { font-size: 0.6rem; }
   .log {
     left: 6px;
     right: 6px;
@@ -222,8 +232,7 @@
   .top-right { max-width: 40vw; }
   .top-right .tag { display: none; }
   .icon-btn { width: 30px; height: 30px; }
-  .dpad { grid-template-columns: repeat(3, 40px); }
-  .pad { width: 40px; height: 40px; }
+  .dpad { grid-template-columns: repeat(3, 38px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

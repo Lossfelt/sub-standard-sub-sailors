@@ -51,7 +51,6 @@ function seek(state, torpedo, rolled, rng, ev) {
 }
 
 function runTorpedo(state, t, rng, ev) {
-  const armed = t.age >= 1; // utskytingsrunden er torpedoen ikke armert
   const rolled = new Set();
   const track = { id: t.id, owner: t.owner, from: [t.x, t.y], path: [], end: null };
   for (let i = 0; i < T.speed && !track.end; i++) {
@@ -69,11 +68,14 @@ function runTorpedo(state, t, rng, ev) {
       t.step += 1;
       track.path.push([nx, ny]);
     }
+    // Sikkerhetsavstand: torpedoen armeres først når den når den tredje ruten på banen sin.
+    // Før det kan den verken treffe den som skjøt eller noen andre.
+    const armed = t.step >= T.minRange;
     if (armed && seek(state, t, rolled, rng, ev)) track.end = 'hit';
   }
   if (!track.end) {
     t.age += 1;
-    if (t.age > T.armedRounds) track.end = 'spent';
+    if (t.age >= T.armedRounds) track.end = 'spent';
   }
   ev.torpedoTracks.push(track);
   return !track.end;
@@ -102,6 +104,27 @@ function moveSubs(state, orders, ev) {
       action.type === 'repair' ? CONFIG.noise.repair : 0,
     );
     Object.assign(sub, { x: moved.x, y: moved.y, vx: moved.vx, vy: moved.vy });
+  }
+}
+
+// Ender flere ubåter i samme rute, og minst én av dem kjørte dit denne runden, kan de kollidere.
+// En kollisjon stopper begge og skader dem som et indirekte treff.
+function runCollisions(state, rng, ev) {
+  const alive = state.subs.filter((s) => s.alive);
+  for (let i = 0; i < alive.length; i++) {
+    for (let j = i + 1; j < alive.length; j++) {
+      const [a, b] = [alive[i], alive[j]];
+      if (!a.alive || !b.alive || a.x !== b.x || a.y !== b.y) continue;
+      const moved = ev.moves[a.id].path.length > 0 || ev.moves[b.id].path.length > 0;
+      if (!moved || !rng.chance(CONFIG.collisionChance)) continue;
+      ev.collisions.push({ x: a.x, y: a.y, ids: [a.id, b.id] });
+      for (const sub of [a, b]) {
+        Object.assign(sub, { vx: 0, vy: 0 });
+        ev.hits[sub.id] = 'collision';
+        if (sub.damage) sink(sub, 'collision', ev);
+        else sub.damage = { repairs: 0, left: CONFIG.damage.roundsToRepair };
+      }
+    }
   }
 }
 
@@ -155,10 +178,11 @@ export function resolveRound(state, orders, rng) {
   state.round += 1;
   const ev = {
     round: state.round, moves: {}, actions: {}, noise: {}, launches: [], torpedoTracks: [],
-    explosions: [], hits: {}, sunk: [], repairs: {}, contacts: {}, focus: {},
+    explosions: [], collisions: [], hits: {}, sunk: [], repairs: {}, contacts: {}, focus: {},
     over: false, winner: null,
   };
   moveSubs(state, orders, ev);
+  runCollisions(state, rng, ev);
   state.torpedoes = state.torpedoes.filter((t) => runTorpedo(state, t, rng, ev));
   runRepairs(state, ev);
   for (const sub of state.subs.filter((s) => s.alive)) {

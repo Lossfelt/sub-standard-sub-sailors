@@ -58,7 +58,7 @@ export function makeTorpedo() {
     part(new THREE.SphereGeometry(0.06, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff5340' }), 0.15, 0, 0),
     part(new THREE.BoxGeometry(0.05, 0.16, 0.02), new THREE.MeshLambertMaterial({ color: '#5a6870' }), -0.16, 0, 0),
   );
-  group.scale.setScalar(1.3);
+  group.scale.setScalar(1.9);
   return group;
 }
 

@@ -57,7 +57,7 @@ export class Bot {
     if (!contact) return { type: 'listen' };
     const age = round - contact.round;
     const fireChance = [0.8, 0.5, 0.3, 0.15][age] ?? 0;
-    const busy = view.torpedoes.length >= 2;
+    const busy = view.torpedoes.filter((t) => t.mine).length >= 2;
     const aim = this.aimPoint(me, contact, age);
     if (!busy && aim && this.rng.chance(fireChance)) return { type: 'fire', ...aim };
     if (age >= 1 && this.rng.chance(0.5)) return { type: 'focus', x: contact.x, y: contact.y };
@@ -113,7 +113,8 @@ export class Bot {
     const speedCost = [3 + 5 * impatience, 1 + 3 * impatience, 7 - 6 * impatience];
     score -= fleeing ? 0 : speedCost[speed];
     for (const t of view.torpedoes) {
-      if (dist(moved.x, moved.y, t.x, t.y) <= 1 || dist(moved.x, moved.y, t.tx, t.ty) <= 1) score -= 40;
+      const nearTarget = t.mine && dist(moved.x, moved.y, t.tx, t.ty) <= 1;
+      if (dist(moved.x, moved.y, t.x, t.y) <= 1 || nearTarget) score -= 40;
     }
     if (fleeing) score += 3 * dist(moved.x, moved.y, this.danger.x, this.danger.y);
     else if (this.waypoint) score -= dist(moved.x, moved.y, this.waypoint.x, this.waypoint.y);

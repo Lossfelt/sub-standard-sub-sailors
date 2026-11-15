@@ -51,30 +51,54 @@ test('torpedo kan ikke siktes nærmere enn tre ruter eller på fjell', () => {
   assert.equal(canTarget(board, 2, 2, 5, 5), false);
 });
 
-test('torpedo er uarmert første runde og treffer ubåt i ruten etterpå', () => {
+test('torpedo treffer ubåt i målruten samme runde som den skytes ut', () => {
   const state = twoSubs({ x: 0, y: 0 }, { x: 3, y: 0 });
   const fire = { a: { action: { type: 'fire', x: 3, y: 0 } } };
-  let ev = resolveRound(state, fire, fixedRng());
-  assert.equal(ev.explosions.length, 0, 'uarmert i utskytingsrunden');
-  ev = resolveRound(state, {}, fixedRng([0.9])); // 0.9 >= 0.3 gir indirekte treff
+  // Uarmert i de to første rutene, så ingen nærhetskast underveis. 0.9 gir indirekte treff.
+  const ev = resolveRound(state, fire, fixedRng([0.9]));
   assert.equal(ev.hits.b, 'indirect');
+  assert.equal(ev.hits.a, undefined);
   assert.deepEqual(state.subs[1].damage, { repairs: 0, left: 3 });
   assert.equal(state.torpedoes.length, 0);
 });
 
 test('direkte treff senker umiddelbart og avgjør spillet', () => {
   const state = twoSubs({ x: 0, y: 0 }, { x: 3, y: 0 });
-  resolveRound(state, { a: { action: { type: 'fire', x: 3, y: 0 } } }, fixedRng());
-  const ev = resolveRound(state, {}, fixedRng([0.1]));
+  const ev = resolveRound(state, { a: { action: { type: 'fire', x: 3, y: 0 } } }, fixedRng([0.1]));
   assert.equal(ev.hits.b, 'direct');
   assert.equal(ev.over, true);
   assert.equal(ev.winner, 'a');
 });
 
-test('torpedo går tom for drivstoff etter fem armerte runder', () => {
+test('torpedo er uarmert de to første rutene og kan ikke treffe noen der', () => {
+  const state = twoSubs({ x: 0, y: 0 }, { x: 1, y: 1 });
+  // b ligger inntil både første og andre rute på banen. Terningen 0 ville gitt treff om den var armert.
+  const ev = resolveRound(state, { a: { action: { type: 'fire', x: 5, y: 0 } } }, fixedRng([0, 0, 0]));
+  assert.deepEqual(ev.hits, {});
+  assert.equal(state.torpedoes.length, 1);
+
+  const onPath = twoSubs({ x: 0, y: 0 }, { x: 2, y: 0 });
+  const through = resolveRound(onPath, { a: { action: { type: 'fire', x: 6, y: 0 } } }, fixedRng([0.9]));
+  // Går rett gjennom ruten til b uarmert, men armeres i tredje rute, som ligger inntil b.
+  assert.equal(through.hits.b, undefined);
+});
+
+test('ubåter som ender i samme rute kan kollidere og blir da skadet', () => {
+  const crash = twoSubs({ x: 0, y: 0 }, { x: 1, y: 0 });
+  let ev = resolveRound(crash, { a: { accel: 'E' } }, fixedRng([0.1]));
+  assert.deepEqual(ev.collisions, [{ x: 1, y: 0, ids: ['a', 'b'] }]);
+  assert.deepEqual(crash.subs.map((s) => [s.vx, !!s.damage]), [[0, true], [0, true]]);
+
+  const pass = twoSubs({ x: 0, y: 0 }, { x: 1, y: 0 });
+  ev = resolveRound(pass, { a: { accel: 'E' } }, fixedRng([0.9]));
+  assert.equal(ev.collisions.length, 0);
+  assert.equal(pass.subs[0].damage, null);
+});
+
+test('torpedo går tom for drivstoff etter fem runder', () => {
   const state = twoSubs({ x: 0, y: 0 }, { x: 11, y: 11 });
   resolveRound(state, { a: { action: { type: 'fire', x: 6, y: 0 } } }, fixedRng());
-  for (let i = 0; i < 4; i++) resolveRound(state, {}, fixedRng());
+  for (let i = 0; i < 3; i++) resolveRound(state, {}, fixedRng());
   assert.equal(state.torpedoes.length, 1);
   const ev = resolveRound(state, {}, fixedRng());
   assert.equal(ev.torpedoTracks[0].end, 'spent');
@@ -136,4 +160,14 @@ test('genererte brett er sammenhengende og har plass til alle', () => {
     assert.equal(spawns.length, 4);
     for (const s of spawns) assert.equal(board.rocks.has(`${s.x},${s.y}`), false);
   }
+});
+
+test('én torpedo rammer bare én ubåt selv om to står i samme rute', () => {
+  const state = twoSubs({ x: 5, y: 5 }, { x: 5, y: 5 });
+  state.torpedoes.push({ id: 1, owner: 'x', x: 5, y: 5, tx: 5, ty: 5, path: [[5, 3], [5, 4], [5, 5]], step: 3, age: 1 });
+  const ev = resolveRound(state, {}, fixedRng([0.1])); // direkte treff på den første
+  assert.deepEqual(Object.keys(ev.hits), ['a']);
+  assert.equal(ev.explosions.length, 1);
+  assert.equal(state.subs[1].alive, true);
+  assert.equal(state.subs[1].damage, null);
 });

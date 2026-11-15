@@ -1,13 +1,15 @@
 // Alt som finnes i 3D-scenen for ett spill: brett, ubåter, torpedoer, vrak og markører.
+import * as THREE from 'three';
 import { buildTerrain } from './scene/terrain.js';
 import { Markers } from './scene/markers.js';
 import { Effects } from './scene/effects.js';
 import { Life } from './scene/life.js';
 import { makeSub, makeTorpedo, setHeading, addHeadlight, disposeObject } from './scene/models.js';
-import { COMPASS } from './texts.js';
+import { COMPASS, cellName } from './texts.js';
 
 const SUB_HEIGHT = 0.45;
 const TORPEDO_HEIGHT = 0.3;
+const RING = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 
 export class World {
   constructor(stage, board, seed, players, you) {
@@ -20,7 +22,7 @@ export class World {
     stage.scene.add(this.terrain.group);
     this.markers = new Markers(stage);
     this.effects = new Effects(stage);
-    this.life = new Life(stage, this.terrain.vents, this.terrain.rng);
+    this.life = new Life(stage, this.terrain.vents, this.terrain.smokers, this.terrain.rng);
     const colour = this.players.get(you).color;
     this.sub = makeSub(colour);
     addHeadlight(this.sub);
@@ -37,12 +39,22 @@ export class World {
   makeCompass() {
     const edge = this.board.size - 1;
     const mid = edge / 2;
-    const spots = [['N', mid, -1.3], ['S', mid, edge + 1.3], ['E', edge + 1.3, mid], ['W', -1.3, mid]];
-    return spots.map(([dir, x, y]) => {
+    const spots = [['N', mid, -2.2], ['S', mid, edge + 2.2], ['E', edge + 2.2, mid], ['W', -2.2, mid]];
+    const labels = spots.map(([dir, x, y]) => {
       const label = this.stage.addLabel('compass', COMPASS[dir]);
       label.pos.copy(this.stage.cellToWorld(x, y, 0));
       return label;
     });
+    // Rutenavn langs alle fire kanter: bokstaver for kolonner, tall for rader (som "F7").
+    for (let i = 0; i <= edge; i++) {
+      const column = cellName(i, 0).slice(0, 1);
+      for (const [text, x, y] of [[column, i, -1], [column, i, edge + 1], [i + 1, -1, i], [i + 1, edge + 1, i]]) {
+        const label = this.stage.addLabel('coord', String(text));
+        label.pos.copy(this.stage.cellToWorld(x, y, 0));
+        labels.push(label);
+      }
+    }
+    return labels;
   }
 
   at(x, y, height) {
@@ -79,13 +91,21 @@ export class World {
     return this.glide(this.sub, move.from, move.path, SUB_HEIGHT, 0.3);
   }
 
+  // Hver torpedo har en rød, pulserende ring på bunnen, slik at den er lett å se.
   ensureTorpedo(id, x, y, own) {
     let entry = this.torpedoes.get(id);
     if (!entry) {
       const model = makeTorpedo();
       model.position.copy(this.at(x, y, TORPEDO_HEIGHT));
-      this.stage.scene.add(model);
-      entry = { model, label: own ? this.stage.addLabel('me') : null };
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: '#ff3b2f', map: this.markers.textures[2], transparent: true, depthWrite: false,
+      });
+      const ring = new THREE.Mesh(RING, ringMat);
+      this.stage.scene.add(model, ring);
+      entry = {
+        model, ring, ringMat, centre: this.at(x, y, TORPEDO_HEIGHT), loitering: false, busy: false,
+        phase: id * 1.7, label: own ? this.stage.addLabel('me') : null,
+      };
       this.torpedoes.set(id, entry);
     }
     return entry;
@@ -95,13 +115,18 @@ export class World {
     const entry = this.torpedoes.get(id);
     if (!entry) return;
     disposeObject(entry.model);
+    entry.ringMat.dispose();
+    entry.ring.removeFromParent();
     entry.label?.remove();
     this.torpedoes.delete(id);
   }
 
   async moveTorpedo(track) {
-    const { model } = this.ensureTorpedo(track.id, track.from[0], track.from[1], true);
-    await this.glide(model, track.from, track.path, TORPEDO_HEIGHT, 0.13);
+    const entry = this.ensureTorpedo(track.id, track.from[0], track.from[1], true);
+    entry.busy = true;
+    entry.model.position.copy(this.at(track.from[0], track.from[1], TORPEDO_HEIGHT));
+    await this.glide(entry.model, track.from, track.path, TORPEDO_HEIGHT, 0.13);
+    entry.busy = false;
     if (track.end) this.removeTorpedo(track.id);
   }
 
@@ -110,14 +135,34 @@ export class World {
     const ids = new Set(list.map((t) => t.id));
     for (const id of [...this.torpedoes.keys()]) if (!ids.has(id)) this.removeTorpedo(id);
     for (const t of list) {
-      const own = t.owner === this.you;
-      const entry = this.ensureTorpedo(t.id, t.x, t.y, own);
-      const target = this.at(t.x, t.y, TORPEDO_HEIGHT);
-      if (entry.model.position.distanceTo(target) > 0.01) {
-        setHeading(entry.model, target.x - entry.model.position.x, target.z - entry.model.position.z);
-        this.effects.moveAlong(entry.model, [target], 0.4);
+      const entry = this.ensureTorpedo(t.id, t.x, t.y, t.mine);
+      entry.centre = this.at(t.x, t.y, TORPEDO_HEIGHT);
+      entry.loitering = t.loitering;
+      const { model, centre } = entry;
+      if (!t.loitering && model.position.distanceTo(centre) > 0.01) {
+        setHeading(model, centre.x - model.position.x, centre.z - model.position.z);
+        entry.busy = true;
+        this.effects.moveAlong(model, [centre], 0.4).then(() => { entry.busy = false; });
       }
-      if (entry.label) entry.label.el.textContent = t.armed ? `${t.roundsLeft}` : 'uarmert';
+      if (entry.label) entry.label.el.textContent = String(t.roundsLeft);
+    }
+  }
+
+  // Ringen pulserer, og en torpedo som ligger ved målet og leter, sirkler rundt ruten.
+  animateTorpedoes(time) {
+    for (const entry of this.torpedoes.values()) {
+      const { model, ring, ringMat, centre } = entry;
+      if (entry.loitering && !entry.busy) {
+        const angle = time * 2.4 + entry.phase;
+        model.position.set(centre.x + Math.cos(angle) * 0.3, TORPEDO_HEIGHT, centre.z + Math.sin(angle) * 0.3);
+        model.rotation.y = Math.atan2(-Math.cos(angle), -Math.sin(angle));
+      }
+      const anchor = entry.loitering ? centre : model.position;
+      const pulse = 0.5 + 0.5 * Math.sin(time * 7 + entry.phase);
+      ring.position.set(anchor.x, 0.045, anchor.z);
+      ring.scale.setScalar(0.75 + pulse * 0.45);
+      ringMat.opacity = 0.45 + pulse * 0.55;
+      if (entry.label) entry.label.pos.copy(model.position).setY(0.8);
     }
   }
 
@@ -174,9 +219,7 @@ export class World {
       const { propeller } = model.userData;
       if (propeller) propeller.rotation.x += dt * 9;
     }
-    for (const { model, label } of this.torpedoes.values()) {
-      if (label) label.pos.copy(model.position).setY(0.75);
-    }
+    this.animateTorpedoes(time);
   }
 
   dispose() {

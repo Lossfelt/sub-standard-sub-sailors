@@ -50,7 +50,7 @@ export class Markers {
       path: layer({ color: '#ffffff', opacity: 0.16, height: 0.014 }), // torpedobane
       focusHit: layer({ color: '#ffb347', opacity: 0.45, height: 0.016 }),
       focusMiss: layer({ color: '#7fa8c0', opacity: 0.22, height: 0.016 }),
-      boom: layer({ color: '#ff5340', map: cross, height: 0.018 }), // hørte eksplosjoner
+      boom: layer({ color: '#ffffff', map: cross, opacity: 0.85, height: 0.018 }), // hørte eksplosjoner
       target: layer({ color: '#ff5340', map: cross, height: 0.020 }),
       own: layer({ color: '#58d6ff', map: outline, height: 0.022 }),
       predict: layer({ color: '#f2c230', map: outline, height: 0.024 }),

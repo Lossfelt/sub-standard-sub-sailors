@@ -17,7 +17,7 @@ const SOUNDS = [
   ['hull_hit', 4, 'Submarine hull hit by a nearby explosion, metal groaning, water spraying, alarm klaxon'],
   ['repair', 2, 'Wrench and ratchet clanking on metal pipes inside a submarine, quick repair work'],
   ['sinking', 4, 'Submarine hull creaking and imploding while sinking, deep groaning metal and bubbles'],
-  ['engine', 2, 'Submarine electric motor hum spinning up, low propeller churn underwater'],
+  ['engine', 0.7, 'Very short submarine electric motor hum, brief low propeller churn underwater'],
   ['bump', 1.5, 'Dull heavy metallic thud of a submarine hull bumping into rock underwater'],
   ['order', 1, 'Single short brass ship bell ding'],
   ['click', 0.5, 'Short retro mechanical toggle switch click'],

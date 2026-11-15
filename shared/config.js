@@ -9,11 +9,13 @@ export const CONFIG = {
   minSpawnDistance: 4,
 
   maxSpeed: 2,
+  // Ubåter kan passere gjennom hverandre, men ender to i samme rute er dette sjansen for at de kolliderer.
+  collisionChance: 0.5,
 
   torpedo: {
     speed: 4, // ruter per runde
-    armedRounds: 5, // aktive runder etter utskytingsrunden
-    minRange: 3, // nærmeste rute man kan sikte på
+    armedRounds: 5, // runder torpedoen leter, medregnet runden den skytes ut
+    minRange: 3, // nærmeste rute man kan sikte på, og ruten på banen der torpedoen armeres
     proximityHitChance: 0.5, // ubåt i naborute
     directHitShare: 0.3, // andel treff som senker umiddelbart
   },

@@ -34,6 +34,8 @@ export class Match {
     this.orders = {};
     this.over = false;
     this.winner = null;
+    this.lastReports = {}; // siste rapport per spiller, til den som kobler til igjen midt i en runde
+    this.wrecks = []; // senkninger er kjent for alle, og sendes på nytt ved gjenoppkobling
     this.timer = null;
     this.deadline = null;
   }
@@ -56,6 +58,8 @@ export class Match {
       players: this.room.publicPlayers(),
       submitted: Object.keys(this.orders),
       view: buildView(this, id),
+      wrecks: this.wrecks,
+      lastReport: this.lastReports[id] ?? null,
       over: this.over ? { winner: this.winner } : null,
     };
   }
@@ -104,15 +108,18 @@ export class Match {
     this.orders = {};
     this.over = ev.over;
     this.winner = ev.winner;
+    this.wrecks.push(...ev.sunk.map(({ id, x, y }) => ({ id, x, y })));
     for (const [id, bot] of this.bots) {
       if (aliveBefore.has(id)) bot.observe(buildReport(this, ev, id, true), buildView(this, id));
     }
     this.arm();
-    for (const p of this.room.connectedHumans()) {
+    for (const p of this.room.players.filter((player) => !player.bot)) {
+      const report = buildReport(this, ev, p.id, aliveBefore.has(p.id));
+      this.lastReports[p.id] = report;
       this.room.sendTo(p.id, {
         t: 'round',
         view: buildView(this, p.id),
-        report: buildReport(this, ev, p.id, aliveBefore.has(p.id)),
+        report,
         over: this.over ? { winner: this.winner } : null,
       });
     }
