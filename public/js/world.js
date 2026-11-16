@@ -139,8 +139,8 @@ export class World {
       entry.centre = this.at(t.x, t.y, TORPEDO_HEIGHT);
       entry.loitering = t.loitering;
       const { model, centre } = entry;
+      if (!t.loitering) setHeading(model, t.hx, t.hy);
       if (!t.loitering && model.position.distanceTo(centre) > 0.01) {
-        setHeading(model, centre.x - model.position.x, centre.z - model.position.z);
         entry.busy = true;
         this.effects.moveAlong(model, [centre], 0.4).then(() => { entry.busy = false; });
       }

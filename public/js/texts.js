@@ -42,7 +42,7 @@ export const RULES_HTML = `
 <h3>Torpedo</h3>
 <ul><li>Sikt på en rute minst ${T.minRange} ruter unna. Torpedoen går ${T.speed} ruter per runde og blir liggende ved målet.</li>
 <li>Den armeres først når den når den tredje ruten på banen sin. I de to første rutene kan den ikke treffe noen, heller ikke deg. Den varer i ${T.armedRounds} runder.</li>
-<li>Alle ser hvor alle torpedoer er (rød, pulserende ring), men ikke hvem som skjøt eller hvor de skal.</li>
+<li>Alle ser hvor alle torpedoer er (rød, pulserende ring) og hvilken vei de peker, men ikke hvem som skjøt eller hvor de skal. Andres torpedoer i fart høres som små røde ringer omtrent der de gikk, ikke nøyaktig.</li>
 <li>Ubåt i samme rute treffes alltid. Ubåt i naborute treffes med ${T.proximityHitChance * 100} % sjanse. Når den er armert bryr den seg ikke om hvem som skjøt, så ikke kjør etter din egen torpedo.</li>
 <li>${T.directHitShare * 100} % av treffene er direkte og senker ubåten. Resten gir skade.</li></ul>
 <h3>Skade</h3>

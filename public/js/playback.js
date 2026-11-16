@@ -6,6 +6,7 @@ import { cellName, SUNK_CAUSE } from './texts.js';
 async function playMovement(game, report) {
   const { world, hud } = game;
   const tasks = report.torpedoTracks.map((track) => world.moveTorpedo(track));
+  for (const cells of report.torpedoSounds ?? []) tasks.push(world.effects.soundTrail(cells));
   if (report.action === 'fire') play('launch', 0.7);
   if (report.move?.path.length) {
     play('engine', 0.3);

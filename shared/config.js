@@ -15,6 +15,7 @@ export const CONFIG = {
   torpedo: {
     speed: 4, // ruter per runde
     armedRounds: 5, // runder torpedoen leter, medregnet runden den skytes ut
+    soundBlur: 1, // andres torpedoer høres som lyd spredt så mange ruter rundt den egentlige banen
     minRange: 3, // nærmeste rute man kan sikte på, og ruten på banen der torpedoen armeres
     proximityHitChance: 0.5, // ubåt i naborute
     directHitShare: 0.3, // andel treff som senker umiddelbart

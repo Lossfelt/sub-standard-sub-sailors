@@ -19,6 +19,7 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - Kanskje man ikke skal kunne stå stille, men alltid må ha minimum 1 i hastighet i en retning, slik at spillerne ikke bare venter i hvert sitt hjørne av brettet. Alternativt at hvis man slår av motoren så tar det litt tid å starte den igjen.
 - Slutt-popup'en, der hvor det står seier (evt det som dukker opp for tapere som har blitt værende for å se på spillet), burde vise hvem som sank hvilken runde, og hvorfor. Feks "R 31 Admiral Lekk ble torpedert av Levin". Kanskje også noe om hvor mange ganger man har reparert båten, med mindre det blir for mye info.
 - Det bør være en sonar-skygge rett bak ubåten, for å simulere "the baffles" hvor man ikke hører noe pga sin egen rotor.
+- Torpedoer som ikke ses nøyaktig med en gang: langt unna hører man bare generelle lyder omtrent der torpedoen er og går. Jo nærmere man er, jo mer presis blir ruten og cellen. Når man er ganske nær, eller torpedoen har vært på kartet noen runder, ser man den helt nøyaktig. (Første steg er gjort: andres torpedoer i fart høres som spredte røde ringer.)
 
 ## Fra idédokumentet
 

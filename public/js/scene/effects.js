@@ -69,6 +69,11 @@ export class Effects {
     });
   }
 
+  // Lyden av en torpedo som går forbi: små røde ringer som dukker opp etter tur langs banen.
+  soundTrail(cells) {
+    return Promise.all(cells.map(([x, y], i) => this.wait(0.01 + i * 0.12).then(() => this.ping(x, y, '#ff6a5a', 1.1))));
+  }
+
   explosion(x, y, height = 0.45) {
     const centre = this.stage.cellToWorld(x, y, height);
     const group = new THREE.Group();

@@ -1,4 +1,4 @@
-// Ting som står på brettet: undervannsfjell og pynt (tang, koraller, småstein, lysende krystaller).
+// Ting som står på brettet: undervannsfjell og pynt (tang, koraller, sjøstjerner, småstein).
 // Bare fjellene har regelbetydning, resten er dekor.
 import * as THREE from 'three';
 import { key } from '/shared/grid.js';
@@ -9,7 +9,6 @@ const WEED_TINTS = ['#3fae5a', '#2f9450', '#5cc46a', '#2a8a66'];
 const CORAL_TINTS = ['#e8788a', '#e89a5c', '#b07fe0', '#e6c36a'];
 const STARFISH_TINTS = ['#e8724a', '#d9566e', '#e6a64a'];
 const PEBBLE_TINTS = ['#8fa3b0', '#7b8f9c', '#a3b3ba'];
-const CRYSTAL_TINTS = ['#7df9ff', '#b388ff', '#8dffb0'];
 
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
@@ -136,8 +135,6 @@ export function buildDecor(stage, board, rng) {
   const corals = instanced(new THREE.CylinderGeometry(0.035, 0.05, 0.3, 5), lit(), cells);
   const starfish = instanced(starfishGeometry(), lit(), cells);
   const pebbles = instanced(new THREE.DodecahedronGeometry(0.08, 0), lit(), cells);
-  // Krystallene lyser av seg selv og påvirkes ikke av lyset i scenen.
-  const crystals = instanced(new THREE.OctahedronGeometry(0.07, 0), new THREE.MeshBasicMaterial(), cells);
   corals.castShadow = true;
   pebbles.castShadow = true;
   const weedInfo = [];
@@ -158,15 +155,11 @@ export function buildDecor(stage, board, rng) {
           pos.y = h * 0.25;
           weedInfo.push({ index: weeds.count, pos, h, phase: rng.next() * 6 });
           place(weeds, pos, new THREE.Vector3(1, h, 1), 0, rng.pick(WEED_TINTS));
-        } else if (roll < 0.23) {
+        } else if (roll < 0.27) {
           const h = 0.5 + rng.next() * 0.9;
           pos.y = 0.15 * h;
           if (i === 0) tint = rng.pick(CORAL_TINTS); // hele klyngen har samme farge
           place(corals, pos, new THREE.Vector3(1, h, 1), rng.next() * 6, tint);
-        } else if (roll < 0.27 && i < 2) {
-          const s = 0.8 + rng.next() * 0.9;
-          pos.y = 0.08 * s;
-          place(crystals, pos, new THREE.Vector3(s * 0.7, s * 1.6, s * 0.7), rng.next() * 6, rng.pick(CRYSTAL_TINTS));
         } else if (roll >= 0.27 && roll < 0.295) {
           pos.y = 0.012;
           if (i === 0) place(starfish, pos, new THREE.Vector3(1, 1, 1), rng.next() * 6, rng.pick(STARFISH_TINTS));
@@ -189,5 +182,5 @@ export function buildDecor(stage, board, rng) {
     }
     weeds.instanceMatrix.needsUpdate = true;
   };
-  return { meshes: [weeds, corals, starfish, pebbles, crystals], sway, vents };
+  return { meshes: [weeds, corals, starfish, pebbles], sway, vents };
 }
