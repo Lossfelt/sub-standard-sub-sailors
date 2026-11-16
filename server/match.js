@@ -6,7 +6,7 @@ import { makeRng, randomSeed } from '../shared/rng.js';
 import { Bot } from './bot.js';
 import { buildView, buildReport } from './views.js';
 
-const SPECTATE_DELAY = 1000; // ms mellom rundene når bare bots er igjen
+const SPECTATE_DELAY = 1500; // ms mellom rundene når bare bots er igjen
 const ACTIONS = new Set(['listen', 'focus', 'fire', 'repair']);
 
 function sanitizeOrder(raw) {

@@ -178,7 +178,7 @@
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
   padding: 18px;
 }
-.banner[hidden] { display: none; }
+.banner[hidden], .banner.mini[hidden] { display: none; }
 .banner p { margin: 0 0 12px; }
 .banner-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .banner-buttons [hidden] { display: none; }

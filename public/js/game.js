@@ -294,7 +294,9 @@ export class Game {
     this.queue = this.queue
       .then(() => {
         if (this.world !== world) return null;
-        world.effects.speed = fast ? 40 : this.backlog > 1 ? 6 : 1;
+        // Ligger avspillingen etter serveren, tas det igjen gradvis, ikke med et hopp som
+        // ser ut som teleportering.
+        world.effects.speed = fast ? 40 : Math.min(4, 1 + 0.5 * (this.backlog - 1));
         return playRound(this, msg);
       })
       .finally(() => { this.backlog -= 1; })

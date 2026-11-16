@@ -195,6 +195,7 @@ export class Hud {
   }
 
   hideBanner() {
+    this.el.banner.classList.remove('mini');
     this.el.banner.hidden = true;
   }
 }
