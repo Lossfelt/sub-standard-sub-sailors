@@ -2,6 +2,7 @@
 // Bare fjellene har regelbetydning, resten er dekor.
 import * as THREE from 'three';
 import { key } from '/shared/grid.js';
+import { rockTexture, chimneyTextures } from './groundtex.js';
 
 const ROCK_TINTS = ['#ffffff', '#e4edf2', '#d6e2ea', '#f1eee2'];
 const WEED_TINTS = ['#3fae5a', '#2f9450', '#5cc46a', '#2a8a66'];
@@ -30,14 +31,10 @@ function place(mesh, pos, scale, rotY, tint, tilt = 0) {
   mesh.count += 1;
 }
 
-// Kjegle med hakkete sider og farge etter høyde: mørk og kald nederst, lys på toppen.
+// Kjegle med hakkete sider. Fargene kommer fra fjellteksturen.
 function rockGeometry() {
   const geometry = new THREE.ConeGeometry(0.5, 1, 7, 4);
   const pos = geometry.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
-  const low = new THREE.Color('#2f4354');
-  const mid = new THREE.Color('#62798c');
-  const top = new THREE.Color('#b4c5cd');
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const y = pos.getY(i);
@@ -50,21 +47,15 @@ function rockGeometry() {
       const spread = 0.78 + jitter * 0.5;
       pos.setXYZ(i, x * spread, y + (jitter - 0.5) * 0.1, z * spread);
     }
-    color.copy(h < 0.5 ? low : mid).lerp(h < 0.5 ? mid : top, h < 0.5 ? h * 2 : (h - 0.5) * 2);
-    colors.set([color.r, color.g, color.b], i * 3);
   }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
   return geometry;
 }
 
-// Skorstein til en undersjøisk vulkan ("smoker"): mørk basalt som gløder mot toppen.
+// Skorstein til en undersjøisk vulkan ("smoker"). Basalt og glød kommer fra teksturen.
 function chimneyGeometry() {
   const geometry = new THREE.CylinderGeometry(0.16, 0.42, 1, 7, 3);
   const pos = geometry.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
-  const low = new THREE.Color('#23262e');
-  const top = new THREE.Color('#9a4a26');
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const y = pos.getY(i);
@@ -73,10 +64,7 @@ function chimneyGeometry() {
     const hash = Math.sin(x * 71.3 + y * 37.9 + z * 53.7) * 43758.5;
     const jitter = hash - Math.floor(hash);
     if (h > 0.01 && h < 0.99) pos.setXYZ(i, x * (0.85 + jitter * 0.35), y, z * (0.85 + jitter * 0.35));
-    color.copy(low).lerp(top, h * h * h);
-    colors.set([color.r, color.g, color.b], i * 3);
   }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
   return geometry;
 }
@@ -85,10 +73,14 @@ const SMOKER_SHARE = 0.35; // andel av fjellrutene som i stedet er vulkaner. Sam
 
 // Fjellruter er enten et fjell (hovedtopp med småtopper rundt) eller en rykende vulkan.
 export function buildRocks(stage, board, rng) {
-  const rockMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  const rockMat = new THREE.MeshLambertMaterial({ map: rockTexture(rng), flatShading: true });
+  const lava = chimneyTextures(rng);
+  const chimneyMat = new THREE.MeshLambertMaterial({
+    map: lava.map, emissiveMap: lava.emissive, emissive: '#ffffff', flatShading: true,
+  });
   const count = board.rockList.length;
   const rocks = instanced(rockGeometry(), rockMat, count * 4);
-  const chimneys = instanced(chimneyGeometry(), rockMat.clone(), count * 3);
+  const chimneys = instanced(chimneyGeometry(), chimneyMat, count * 3);
   // Glødende åpning på toppen av skorsteinen. Lyser av seg selv.
   const glow = instanced(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 7), new THREE.MeshBasicMaterial(), count * 3);
   rocks.castShadow = true;

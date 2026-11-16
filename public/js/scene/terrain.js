@@ -3,12 +3,13 @@
 import * as THREE from 'three';
 import { makeRng } from '/shared/rng.js';
 import { key } from '/shared/grid.js';
-import { tileTextures, cliffTexture } from './textures.js';
+import { tileTextures, cliffTexture } from './groundtex.js';
 import { buildRocks, buildDecor } from './props.js';
 import { makeCaustics } from './water.js';
 
 const STONE_TINTS = ['#6f9cae', '#6691a5', '#7ba7b4'];
 const MOSS_TINTS = ['#5aa886', '#4f9c7c', '#66b390'];
+const SAND_TINTS = ['#b9b48f', '#aeab8c', '#c2ba92'];
 const ROCK_FLOOR_TINT = '#4f6c7a';
 
 const dummy = new THREE.Object3D();
@@ -18,7 +19,7 @@ const mossColor = new THREE.Color();
 // Sokkelen brettet hviler på. Fargen tones mot svart nedover, så den forsvinner i dypet.
 function buildBase(size, rng) {
   const cliff = cliffTexture(rng);
-  cliff.repeat.set(size, 1);
+  cliff.repeat.set(size / 2, 1);
   const geometry = new THREE.BoxGeometry(size + 0.3, 2.6, size + 0.3);
   const pos = geometry.attributes.position;
   const colors = new Float32Array(pos.count * 3);
@@ -51,28 +52,47 @@ function patchNoise(size, rng) {
   };
 }
 
-// Flisene deles på fire nett, ett per teksturvariant.
+const TILE_MIX = ['plain', 'plain', 'plain', 'plain', 'cracked', 'cracked', 'cobbles', 'cobbles'];
+
+// Hvilken slags flis som ligger i en rute: mose og sand i hver sine flekker, ellers stein.
+function tileKind(rng, rock, mossiness, sandiness) {
+  if (rock) return 'plain';
+  if (mossiness > 0.5) return 'moss';
+  if (sandiness > 0.68) return 'sand';
+  if (rng.chance(0.035)) return 'glyph';
+  return rng.pick(TILE_MIX);
+}
+
+// Flisene deles på ett nett per teksturvariant.
 function buildTiles(stage, board, rng) {
   const { size } = board;
   const geometry = new THREE.BoxGeometry(0.94, 0.16, 0.94);
-  const meshes = tileTextures(rng).map((map) => {
-    const mesh = new THREE.InstancedMesh(geometry, new THREE.MeshLambertMaterial({ map }), size * size);
-    mesh.count = 0;
-    mesh.frustumCulled = false;
-    mesh.receiveShadow = true;
-    return mesh;
-  });
+  const kinds = {};
+  const meshes = [];
+  for (const [kind, maps] of Object.entries(tileTextures(rng))) {
+    kinds[kind] = maps.map((map) => {
+      const mesh = new THREE.InstancedMesh(geometry, new THREE.MeshLambertMaterial({ map }), size * size);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      mesh.receiveShadow = true;
+      meshes.push(mesh);
+      return mesh;
+    });
+  }
   const moss = patchNoise(size, rng);
+  const sand = patchNoise(size, rng);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const rock = board.rocks.has(key(x, y));
       const mossiness = THREE.MathUtils.smoothstep(moss(x, y), 0.35, 0.7);
-      const variant = mossiness > 0.6 ? 2 : rng.pick([0, 0, 1, 3]);
-      const mesh = meshes[rock ? 0 : variant];
-      color.set(rng.pick(STONE_TINTS)).lerp(mossColor.set(rng.pick(MOSS_TINTS)), mossiness);
+      const kind = tileKind(rng, rock, mossiness, sand(x, y));
+      const mesh = rng.pick(kinds[kind]);
+      color.set(rng.pick(STONE_TINTS)).lerp(mossColor.set(rng.pick(MOSS_TINTS)), mossiness * 0.6);
+      if (kind === 'sand') color.set(rng.pick(SAND_TINTS));
       if (rock) color.set(ROCK_FLOOR_TINT);
       dummy.position.copy(stage.cellToWorld(x, y, -0.08 - rng.next() * 0.05));
-      dummy.rotation.set(0, rng.int(4) * (Math.PI / 2), 0);
+      // Stein kan ligge alle veier, men tegn og sandbølger skal peke samme vei over hele brettet.
+      dummy.rotation.set(0, kind === 'sand' || kind === 'glyph' ? 0 : rng.int(4) * (Math.PI / 2), 0);
       dummy.updateMatrix();
       mesh.setMatrixAt(mesh.count, dummy.matrix);
       mesh.setColorAt(mesh.count, color);

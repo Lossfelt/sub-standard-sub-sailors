@@ -9,7 +9,6 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
   - Boblespor bak torpedoer og ubåter i fart, slik at bevegelse leses tydeligere
   - Skadet ubåt lekker bobler og krenger, vrak som ser ødelagte ut (knekt skrog)
   - Større og mer variert eksplosjon, med trykkbølge som brer seg over flisene
-  - Håndtegnede pikselteksturer eller sprites for fliser, fjell og vulkaner i stedet for grunnformer
   - Flere biotoper per brett: korallrev, dyphavsslette, isdekke, skipskirkegård
   - Store pyntegjenstander som ruiner og skipsvrak (som på tittelbildet)
   - Ikoner på handlingsknappene, og en penere lobby
