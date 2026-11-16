@@ -15,9 +15,10 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
   - Ikoner på handlingsknappene, og en penere lobby
   - Kameraet følger egen ubåt mykt når man er zoomet inn, og en knapp for "finn meg"
 
-## Ny tanke fra Levin
+## Nye tanker fra Levin
 
 - Kanskje man ikke skal kunne stå stille, men alltid må ha minimum 1 i hastighet i en retning, slik at spillerne ikke bare venter i hvert sitt hjørne av brettet.
+- Slutt-popup'en, der hvor det står seier (evt det som dukker opp for tapere som har blitt værende for å se på spillet), burde vise hvem som sank hvilken runde, og hvorfor. Feks "R 31 Admiral Lekk ble torpedert av Levin". Kanskje også noe om hvor mange ganger man har reparert båten, med mindre det blir for mye info.
 
 ## Fra idédokumentet
 
