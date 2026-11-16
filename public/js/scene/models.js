@@ -53,9 +53,8 @@ export function makeTorpedo() {
     new THREE.MeshLambertMaterial({ color: '#d5dde2', flatShading: true }),
   );
   body.rotation.z = Math.PI / 2;
-  // Spiss rød nese foran og korsformede finner bak, slik at man ser hvilken vei den går.
-  const nose = part(new THREE.ConeGeometry(0.075, 0.2, 6), new THREE.MeshBasicMaterial({ color: '#ff5340' }), 0.2, 0, 0);
-  nose.rotation.z = -Math.PI / 2;
+  // Rund rød nese foran og korsformede finner bak, slik at man ser hvilken vei den går.
+  const nose = part(new THREE.SphereGeometry(0.06, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff5340' }), 0.15, 0, 0);
   const finMat = new THREE.MeshLambertMaterial({ color: '#5a6870' });
   group.add(
     body,

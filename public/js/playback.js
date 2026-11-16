@@ -5,8 +5,12 @@ import { cellName, SUNK_CAUSE } from './texts.js';
 
 async function playMovement(game, report) {
   const { world, hud } = game;
-  const tasks = report.torpedoTracks.map((track) => world.moveTorpedo(track));
-  for (const cells of report.torpedoSounds ?? []) tasks.push(world.effects.soundTrail(cells));
+  const { reveal } = report;
+  const tracks = reveal ? reveal.tracks : report.torpedoTracks;
+  const tasks = tracks.map((track) => world.moveTorpedo(track, track.owner === game.you));
+  // Tilskuere ser alle ubåter kjøre. Levende spillere hører bare andres torpedoer omtrentlig.
+  for (const [id, move] of Object.entries(reveal?.moves ?? {})) tasks.push(world.moveOther(id, move));
+  if (!reveal) for (const cells of report.torpedoSounds ?? []) tasks.push(world.effects.soundTrail(cells));
   if (report.action === 'fire') play('launch', 0.7);
   if (report.move?.path.length) {
     play('engine', 0.3);
@@ -58,12 +62,12 @@ async function playSinkings(game, report) {
   const { world, hud } = game;
   for (const s of report.sunk) {
     play('sinking', 0.8);
-    world.addWreck(s.id, s.x, s.y);
+    const sinking = world.sink(s.id, s.x, s.y);
     const mine = s.id === game.you;
     hud.log(mine
       ? `Vi ${SUNK_CAUSE[s.cause]}. Takk for innsatsen, mannskap.`
       : `${game.playerName(s.id)} ${SUNK_CAUSE[s.cause]} ved ${cellName(s.x, s.y)}.`, mine ? 'bad' : 'good');
-    await world.effects.wait(0.5);
+    await sinking;
   }
   if (report.repair?.done) {
     play('repair', 0.7);

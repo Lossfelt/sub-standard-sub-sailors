@@ -65,5 +65,7 @@ export function buildReport(match, ev, id, wasAlive) {
     repair: ev.repairs[id] ?? null,
     torpedoTracks: ev.torpedoTracks.filter((t) => t.owner === id),
     torpedoSounds: torpedoSounds(match, ev, id),
+    // Tilskuere ser alt som skjedde, slik at alle ubåter og torpedoer kan animeres.
+    reveal: wasAlive ? null : { moves: ev.moves, tracks: ev.torpedoTracks },
   };
 }

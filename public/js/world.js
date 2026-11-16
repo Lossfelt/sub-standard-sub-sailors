@@ -91,6 +91,33 @@ export class World {
     return this.glide(this.sub, move.from, move.path, SUB_HEIGHT, 0.3);
   }
 
+  // Andre ubåter er bare synlige for tilskuere.
+  async moveOther(id, move) {
+    const model = this.others.get(id);
+    if (model && move.path.length) await this.glide(model, move.from, move.path, SUB_HEIGHT, 0.3);
+  }
+
+  // En truffet ubåt krenger og synker til bunns, og blir liggende som vrak.
+  async sink(id, x, y) {
+    const model = id === this.you ? this.sub : this.others.get(id);
+    if (model?.visible) {
+      model.userData.sinking = true;
+      const from = model.position.clone();
+      const bottom = this.at(x, y, 0.16);
+      await this.effects.tween(0.9, (t) => {
+        model.position.lerpVectors(from, bottom, t);
+        model.rotation.x = t * 0.5;
+        model.rotation.z = t * 0.35;
+      });
+    }
+    this.addWreck(id, x, y, model?.rotation.y);
+    if (model) {
+      model.userData.sinking = false;
+      model.rotation.x = 0;
+      model.rotation.z = 0;
+    }
+  }
+
   // Hver torpedo har en rød, pulserende ring på bunnen, slik at den er lett å se.
   ensureTorpedo(id, x, y, own) {
     let entry = this.torpedoes.get(id);
@@ -121,8 +148,8 @@ export class World {
     this.torpedoes.delete(id);
   }
 
-  async moveTorpedo(track) {
-    const entry = this.ensureTorpedo(track.id, track.from[0], track.from[1], true);
+  async moveTorpedo(track, own = true) {
+    const entry = this.ensureTorpedo(track.id, track.from[0], track.from[1], own);
     entry.busy = true;
     entry.model.position.copy(this.at(track.from[0], track.from[1], TORPEDO_HEIGHT));
     await this.glide(entry.model, track.from, track.path, TORPEDO_HEIGHT, 0.13);
@@ -189,9 +216,10 @@ export class World {
     }
   }
 
-  addWreck(id, x, y) {
+  addWreck(id, x, y, heading) {
     const wreck = makeSub(this.players.get(id).color, 'wreck');
     wreck.position.copy(this.at(x, y, 0.16));
+    if (heading != null) wreck.rotation.y = heading;
     this.stage.scene.add(wreck);
     this.wrecks.push(wreck);
     if (id === this.you) this.sub.visible = false;
@@ -215,6 +243,7 @@ export class World {
     this.life.update(time);
     const bob = Math.sin(time * 2) * 0.03;
     for (const model of [this.sub, this.ghost, ...this.others.values()]) {
+      if (model.userData.sinking) continue;
       model.position.y = SUB_HEIGHT + bob;
       const { propeller } = model.userData;
       if (propeller) propeller.rotation.x += dt * 9;
