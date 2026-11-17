@@ -48,26 +48,28 @@ const FRAGMENT = /* glsl */ `
     return pow(abs(c), 8.0);
   }
 
-  // Slår opp i nettet på hele piksler, så linjene flytter seg ett pikselsteg om gangen.
+  // Nettet slås opp med myk utjevning, så det glir jevnt i stedet for å hoppe ett piksel om gangen.
   float web(vec2 pixel) {
-    return texture2D(uWeb, (floor(pixel) + 0.5) / ${WEB.toFixed(1)}).r;
+    return texture2D(uWeb, pixel / ${WEB.toFixed(1)}).r;
   }
 
   float voronoiCaustic() {
-    // Utzoomet tegnes nettet med grovere piksler, men mønsteret beholder samme størrelse.
+    // Ruten deles i faste lyspiksler. Utzoomet blir de grovere, men mønsteret beholder størrelsen.
     float step = ${WEB_DENSITY.toFixed(1)} / (uTexels * 2.0);
-    vec2 pixel = floor(vCell * uTexels * 2.0) * step;
-    vec2 a = pixel + floor(vec2(uTime * 2.1, uTime * 0.9));
-    // Det andre laget er speilet og snudd, og glir en annen vei, så de ikke følger hverandre.
-    vec2 b = vec2(pixel.y, -pixel.x) + floor(vec2(-uTime * 1.3, uTime * 1.7)) + 57.0;
-    float light = web(a) * web(b);
-    return light > 0.42 ? 1.0 : light > 0.16 ? 0.5 : 0.0;
+    vec2 pixel = (floor(vCell * uTexels * 2.0) + 0.5) * step;
+    // Svak bølging i tillegg til glidningen, så nettet ikke flytter seg som en stiv plate.
+    vec2 sway = vec2(sin(uTime * 0.9 + pixel.y * 0.09), cos(uTime * 0.7 + pixel.x * 0.08)) * 2.5;
+    vec2 a = pixel + sway + vec2(uTime * 5.0, uTime * 2.2);
+    // Det andre laget er snudd og glir en annen vei, så de ikke følger hverandre.
+    vec2 b = vec2(pixel.y, -pixel.x) - sway + vec2(-uTime * 3.4, uTime * 4.1) + 57.0;
+    // Fire lystrinn gir duse overganger, men holder flatene rene.
+    return floor(web(a) * web(b) * 4.0 + 0.3) / 4.0;
   }
 
   void main() {
     float light;
     if (uMode > 0.5) {
-      light = voronoiCaustic() * 0.85;
+      light = voronoiCaustic() * 0.75;
     } else {
       vec2 cell = floor(vCell * uTexels) / uTexels;
       light = caustic(cell * 1.9 - 250.0, uTime * 0.35 + 23.0);
@@ -90,14 +92,15 @@ function webTexture() {
         if (d < d1) [d1, d2] = [d, d1];
         else if (d < d2) d2 = d;
       }
-      const edge = Math.max(0, 1 - (d2 - d1) / 9);
-      const value = Math.round(edge * edge * 255);
+      // Bred, myk kant: lysest midt på grensen og gradvis mørkere inn i cellen.
+      const edge = Math.max(0, 1 - (d2 - d1) / 16);
+      const value = Math.round(edge ** 1.6 * 255);
       data.set([value, value, value, 255], (y * WEB + x) * 4);
     }
   }
   const texture = new THREE.DataTexture(data, WEB, WEB);
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.magFilter = texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = texture.minFilter = THREE.LinearFilter;
   texture.needsUpdate = true;
   return texture;
 }
