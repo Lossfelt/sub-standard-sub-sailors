@@ -164,6 +164,10 @@ export class Effects {
       pos.setY(i, y > 5 ? 0 : y);
     }
     pos.needsUpdate = true;
+    // Utzoomet blir svevepartiklene færre og svakere, så de ikke drukner brettet i prikker.
+    const detail = this.stage.detail ?? 1;
+    this.snow.geometry.setDrawRange(0, Math.round(pos.count * (0.3 + 0.7 * detail)));
+    this.snow.material.opacity = 0.3 + 0.25 * detail;
   }
 
   dispose() {

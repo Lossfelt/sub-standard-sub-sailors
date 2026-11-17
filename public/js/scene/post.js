@@ -13,6 +13,7 @@ const VERTEX = /* glsl */ `
 const FRAGMENT = /* glsl */ `
   uniform sampler2D tScene;
   uniform float uTime;
+  uniform float uDither; // 1 gir fullt prikkemønster, lavere gir roligere flater
   varying vec2 vUv;
 
   // Kompakt 4x4 Bayer-matrise uten oppslagstabell.
@@ -47,7 +48,7 @@ const FRAGMENT = /* glsl */ `
     float luma = dot(color, vec3(0.299, 0.587, 0.114));
     color = mix(vec3(luma), color, 1.08);
     const float LEVELS = 26.0;
-    color = floor(color * LEVELS + bayer4(gl_FragCoord.xy)) / LEVELS;
+    color = floor(color * LEVELS + 0.47 + (bayer4(gl_FragCoord.xy) - 0.47) * uDither) / LEVELS;
     gl_FragColor = vec4(color, 1.0);
   }
 `;
@@ -64,7 +65,7 @@ export class PostProcess {
       minFilter: THREE.NearestFilter,
     });
     this.material = new THREE.ShaderMaterial({
-      uniforms: { tScene: { value: this.target.texture }, uTime: { value: 0 } },
+      uniforms: { tScene: { value: this.target.texture }, uTime: { value: 0 }, uDither: { value: 1 } },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
       depthTest: false,
@@ -81,7 +82,8 @@ export class PostProcess {
     this.target.setSize(width, height);
   }
 
-  render(scene, camera, time) {
+  render(scene, camera, time, detail = 1) {
+    this.material.uniforms.uDither.value = 0.3 + 0.7 * detail;
     const { renderer } = this;
     renderer.setRenderTarget(this.target);
     renderer.setClearColor(0x000000, 0);

@@ -97,6 +97,8 @@ export class Stage {
     cam.updateProjectionMatrix();
     // Hvor mange spillpiksler en rute er bred på skjermen. Brukes til å forenkle detaljer.
     this.cellPixels = (this.renderer.domElement.height * this.zoom) / (2 * halfH);
+    // 0 helt utzoomet på liten skjerm, 1 når rutene er store nok til å vise alle detaljer.
+    this.detail = THREE.MathUtils.clamp((this.cellPixels - 12) / 14, 0, 1);
     const c = Math.cos(PITCH);
     cam.position.set(c * Math.sin(this.yaw), Math.sin(PITCH), c * Math.cos(this.yaw))
       .multiplyScalar(CAMERA_DISTANCE);
@@ -224,7 +226,7 @@ export class Stage {
     this.updateFollow(dt);
     this.updateCamera();
     for (const callback of this.frameCallbacks) callback(dt, time / 1000);
-    this.post.render(this.scene, this.camera, time / 1000);
+    this.post.render(this.scene, this.camera, time / 1000, this.detail);
     this.updateLabels();
   }
 }
