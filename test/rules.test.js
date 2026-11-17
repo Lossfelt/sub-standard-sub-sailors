@@ -160,6 +160,11 @@ test('baffles: i fart hører man ikke det som ligger rett bak', () => {
   const side = twoSubs({ x: 6, y: 0 }, { x: 10, y: 0 });
   const south = { a: { accel: 'S' }, b: { action: { type: 'fire', x: 10, y: 8 } } };
   assert.deepEqual(resolveRound(side, south, fixedRng([0])).contacts.a, [{ x: 10, y: 0 }]);
+  // Fokusert sonar bakover finner heller ingenting.
+  const focus = twoSubs({ x: 6, y: 0 }, { x: 10, y: 0 });
+  const ev = resolveRound(focus, { a: { accel: 'W', action: { type: 'focus', x: 10, y: 0 } } }, fixedRng());
+  assert.equal(ev.focus.a.found, false);
+  assert.ok(ev.focus.a.hidden.some(([x, y]) => x === 10 && y === 0));
 });
 
 test('genererte brett er sammenhengende og har plass til alle', () => {

@@ -82,6 +82,7 @@ async function playExplosions(game, report, sunkLeft) {
 }
 
 async function playSinkings(game, report, sunkLeft) {
+  const { hud } = game;
   for (const s of sunkLeft) await playSinking(game, s);
   if (report.repair?.done) {
     play('repair', 0.7);
@@ -112,7 +113,7 @@ function playFocus(game, focus) {
     markers.set('focusHit', focus.cells);
     hud.log(`Fokusert sonar rundt ${where}: det er en ubåt i området.`, 'sonar');
   }
-  if (focus.hidden.length) hud.log('Deler av området ligger i sonarskygge bak fjell.');
+  if (focus.hidden.length) hud.log('Deler av området ligger i sonarskygge, bak fjell eller rett bak oss.');
 }
 
 async function playSonar(game, report) {

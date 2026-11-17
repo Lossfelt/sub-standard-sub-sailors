@@ -318,7 +318,16 @@ export class Game {
         world.effects.speed = fast ? 40 : Math.min(4, 1 + 0.5 * (this.backlog - 1));
         return playRound(this, msg);
       })
-      .finally(() => { this.backlog -= 1; })
-      .catch((err) => console.error('Feil under avspilling av runden:', err));
+      .catch((err) => {
+        // Feiler avspillingen, hoppes det rett til serverens fasit, så spillet ikke låser seg.
+        console.error('Feil under avspilling av runden:', err);
+        if (this.world !== world) return;
+        this.view = msg.view;
+        this.submitted = [];
+        this.applyView();
+        if (msg.over) showGameOver(this, msg.over);
+        this.beginRound();
+      })
+      .finally(() => { this.backlog -= 1; });
   }
 }

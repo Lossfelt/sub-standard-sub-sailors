@@ -157,7 +157,9 @@ function focusedSonar(state, listener, action, ev) {
   const cells = [];
   const hidden = [];
   for (const [x, y] of areaCells(board.size, action.x, action.y)) {
-    const open = !board.rocks.has(key(x, y)) && hasLineOfSight(board, listener.x, listener.y, x, y);
+    // Fjell og egen propell (baffles) gir sonarskygge også for fokusert sonar.
+    const open = !board.rocks.has(key(x, y)) && hasLineOfSight(board, listener.x, listener.y, x, y)
+      && !inBaffles(listener.vx, listener.vy, x - listener.x, y - listener.y);
     (open ? cells : hidden).push([x, y]);
   }
   const found = state.subs.filter((s) => s.alive && s.id !== listener.id
