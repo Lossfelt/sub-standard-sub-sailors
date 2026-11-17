@@ -82,13 +82,25 @@ export class Match {
     if (this.over || this.timer || !this.room.connectedHumans().length) return;
     if (!this.waiting().length) {
       const humansPlaying = this.room.connectedHumans().some((p) => this.isAlive(p.id));
-      this.timer = setTimeout(() => this.resolve(), humansPlaying ? 0 : SPECTATE_DELAY);
+      this.timer = setTimeout(() => this.safeResolve(), humansPlaying ? 0 : SPECTATE_DELAY);
       return;
     }
     const seconds = this.room.timerSeconds();
     if (seconds > 0) {
       this.deadline = Date.now() + seconds * 1000;
-      this.timer = setTimeout(() => this.resolve(), seconds * 1000);
+      this.timer = setTimeout(() => this.safeResolve(), seconds * 1000);
+    }
+  }
+
+  // Runder som klokka starter, kjører utenfor meldingshåndteringen og dens feilfangst. En feil
+  // her ville ellers stoppe hele serveren og alle rom. Nå stopper bare dette spillet.
+  safeResolve() {
+    try {
+      this.resolve();
+    } catch (err) {
+      console.error(`Feil i runden i rom ${this.room.code}:`, err);
+      this.stop();
+      this.room.broadcast({ t: 'error', msg: 'Noe gikk galt på serveren, og spillet måtte stoppes.' });
     }
   }
 

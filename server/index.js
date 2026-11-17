@@ -43,7 +43,15 @@ function resolveFile(urlPath) {
 }
 
 const server = createServer(async (req, res) => {
-  const urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+  // En ugyldig URL (for eksempel "/%E0") får decodeURIComponent til å kaste. Det skal gi 404, ikke
+  // en ufanget feil som stopper hele serveren.
+  let urlPath;
+  try {
+    urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+  } catch {
+    res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }).end('Ugyldig adresse');
+    return;
+  }
   if (urlPath === '/healthz') {
     res.writeHead(200, { 'content-type': 'text/plain' }).end('ok');
     return;
@@ -65,6 +73,9 @@ const server = createServer(async (req, res) => {
 
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 4096 });
 wss.on('connection', handleConnection);
+
+// Siste skanse: et avvist løfte ingen tok hånd om, skal logges, ikke stoppe alle rom.
+process.on('unhandledRejection', (err) => console.error('Ufanget feil i løfte:', err));
 
 server.listen(PORT, () => {
   console.log(`S.S.S.S. kjører på http://localhost:${PORT}`);
