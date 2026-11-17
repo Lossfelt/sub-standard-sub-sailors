@@ -6,6 +6,7 @@ import { Game } from './game.js';
 import { Stage } from './scene/stage.js';
 import { initAudio, play, startAmbient, stopAmbient, toggleMute, isMuted } from './audio.js';
 import { RULES_HTML } from './texts.js';
+import { toggleCausticsStyle } from './scene/water.js';
 
 const $ = (id) => document.getElementById(id);
 // Brettet står på skrå, så piltastene følger skjermdiagonalene.
@@ -57,6 +58,12 @@ function openRules() {
 
 $('help').addEventListener('click', openRules);
 $('find').addEventListener('click', () => game.findMe());
+// Midlertidig: sammenligne gammelt og nytt lysspill på bunnen.
+$('caustics').addEventListener('click', () => {
+  const voronoi = toggleCausticsStyle() === 1;
+  $('caustics').classList.toggle('off', !voronoi);
+  $('caustics').title = voronoi ? 'Lysspill: nytt (Voronoi)' : 'Lysspill: gammelt';
+});
 $('menu-help').addEventListener('click', openRules);
 $('leave-lobby').addEventListener('click', leaveRoom);
 $('leave').addEventListener('close', () => {
