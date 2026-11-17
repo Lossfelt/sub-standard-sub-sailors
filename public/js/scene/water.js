@@ -11,7 +11,7 @@ const WEB = 128; // Voronoi-bildet er WEB x WEB piksler
 const WEB_DENSITY = 16; // nettpiksler per rute på nært hold
 
 // Felles bryter for alle brett, slik at knappen virker også etter nytt spill.
-const MODE = { value: 1 };
+const MODE = { value: 0 };
 export function toggleCausticsStyle() {
   MODE.value = 1 - MODE.value;
   return MODE.value;
@@ -72,7 +72,14 @@ const FRAGMENT = /* glsl */ `
       light = voronoiCaustic() * 0.75;
     } else {
       vec2 cell = floor(vCell * uTexels) / uTexels;
-      light = caustic(cell * 1.9 - 250.0, uTime * 0.35 + 23.0);
+      // Ett mønster alene gjentar seg med få ruters mellomrom. To mønstre i ulik skala, det ene
+      // dreid en skjev vinkel, gjentar seg nesten aldri likt. En langsom, stor bølge gjør i
+      // tillegg at noen deler av brettet er lysere enn andre.
+      vec2 turned = mat2(0.80, -0.60, 0.60, 0.80) * cell;
+      float first = caustic(cell * 1.9 - 250.0, uTime * 0.35 + 23.0);
+      float second = caustic(turned * 1.37 + 91.0, uTime * 0.29 + 7.0);
+      float swell = 0.65 + 0.35 * sin(cell.x * 0.31 + uTime * 0.11) * sin(cell.y * 0.23 - uTime * 0.08 + 1.7);
+      light = max(first, second) * swell;
     }
     gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * uStrength, 1.0);
   }
