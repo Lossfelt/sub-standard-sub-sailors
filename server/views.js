@@ -23,7 +23,7 @@ export function buildView(match, id) {
     timeLeft: match.deadline ? Math.max(0, match.deadline - Date.now()) : null,
     // Hvem som påførte skaden holdes hemmelig til spillet er over.
     me: {
-      x: me.x, y: me.y, vx: me.vx, vy: me.vy, alive: me.alive,
+      x: me.x, y: me.y, vx: me.vx, vy: me.vy, alive: me.alive, idle: me.idle ?? 0,
       damage: me.damage && { repairs: me.damage.repairs, left: me.damage.left },
     },
     torpedoes: state.torpedoes.map((t) => torpedoFor(t, id, false)),

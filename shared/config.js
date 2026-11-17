@@ -24,6 +24,10 @@ export const CONFIG = {
   // Oppdagelsessjanse i prosentpoeng, før avstand i ruter trekkes fra.
   noise: {
     idle: 10,
+    // Motoren tåler ikke tomgang: hver runde i strekk man står stille, blir den mer ustabil og
+    // bråkete, opp til et tak. Den roer seg straks man kjører igjen.
+    idleGrowth: 5,
+    idleMax: 40,
     perSpeed: 20,
     torpedo: 50,
     repair: 20,

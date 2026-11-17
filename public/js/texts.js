@@ -36,6 +36,7 @@ export const RULES_HTML = `
 <h3>Sonar</h3>
 <ul><li><b>Lytt:</b> sjanse for å høre hver ubåt = støyen dens minus avstanden i ruter (prosent).</li>
 <li>Støy: stille ${CONFIG.noise.idle}, motor ${CONFIG.noise.perSpeed} per fartsnivå, reparasjon ${CONFIG.noise.repair}, torpedoskudd ${CONFIG.noise.torpedo}.</li>
+<li>Motoren er ikke laget for tomgang. For hver runde i strekk du står stille, hoster den ${CONFIG.noise.idleGrowth} mer, opp til ${CONFIG.noise.idleMax}. Den roer seg straks du kjører igjen.</li>
 <li><b>Fokuser sonar:</b> søk i et 3×3-område. Står du stille får du nøyaktig rute, er du i fart får du bare ja eller nei. Du hører ikke resten av kartet den runden.</li>
 <li>Fjell gir sonarskygge: du hører ikke det som ligger bak dem.</li>
 <li>I fart overdøver din egen propell alt som ligger rett bak deg, både for lytting og fokusert sonar. Den døve sonen vises som et mørkt felt bak ubåten.</li>

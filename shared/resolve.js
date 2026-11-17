@@ -3,7 +3,7 @@
 import { CONFIG } from './config.js';
 import {
   key, inBounds, dist, linePath, hasLineOfSight, accelerate, moveSub,
-  speedOf, canTarget, areaCells, inBaffles,
+  canTarget, areaCells, inBaffles, noiseOf,
 } from './grid.js';
 
 const T = CONFIG.torpedo;
@@ -103,13 +103,9 @@ function moveSubs(state, orders, ev) {
     const v = accelerate(sub.vx, sub.vy, order?.accel);
     const moved = moveSub(state.board, sub.x, sub.y, v.vx, v.vy);
     ev.moves[sub.id] = { from: [sub.x, sub.y], path: moved.path, bumped: moved.bumped };
-    ev.noise[sub.id] = Math.max(
-      CONFIG.noise.idle,
-      CONFIG.noise.perSpeed * speedOf(v.vx, v.vy),
-      action.type === 'fire' ? CONFIG.noise.torpedo : 0,
-      action.type === 'repair' ? CONFIG.noise.repair : 0,
-    );
-    Object.assign(sub, { x: moved.x, y: moved.y, vx: moved.vx, vy: moved.vy });
+    ev.noise[sub.id] = noiseOf(v.vx, v.vy, action.type, sub.idle);
+    const still = v.vx === 0 && v.vy === 0;
+    Object.assign(sub, { x: moved.x, y: moved.y, vx: moved.vx, vy: moved.vy, idle: still ? (sub.idle ?? 0) + 1 : 0 });
   }
 }
 
@@ -214,7 +210,7 @@ export function createState(board, spawns, ids) {
     nextTorpedoId: 1,
     torpedoes: [],
     subs: ids.map((id, i) => ({
-      id, x: spawns[i].x, y: spawns[i].y, vx: 0, vy: 0, alive: true, damage: null,
+      id, x: spawns[i].x, y: spawns[i].y, vx: 0, vy: 0, alive: true, damage: null, idle: 0,
     })),
   };
 }

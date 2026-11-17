@@ -151,6 +151,18 @@ test('passiv sonar: støy minus avstand, og skygge bak fjell', () => {
   assert.deepEqual(resolveRound(shadow, fire, fixedRng([0])).contacts.a, []);
 });
 
+test('motoren bråker mer for hver runde den står på tomgang, og roer seg i fart', () => {
+  const state = twoSubs({ x: 0, y: 0 }, { x: 8, y: 8 });
+  const noise = (orders) => resolveRound(state, orders, fixedRng()).noise.a;
+  assert.equal(noise({}), 10);
+  assert.equal(noise({}), 15);
+  assert.equal(noise({}), 20);
+  assert.equal(noise({ a: { accel: 'E' } }), 20); // fart 1
+  assert.equal(noise({ a: { accel: 'W' } }), 10); // stoppet igjen: frisk motor
+  for (let i = 0; i < 10; i++) noise({});
+  assert.equal(noise({}), 40, 'taket');
+});
+
 test('baffles: i fart hører man ikke det som ligger rett bak', () => {
   // a kjører mot vest, bort fra b. b ligger rett bak og høres ikke, selv om den skyter.
   const away = twoSubs({ x: 6, y: 0 }, { x: 10, y: 0 });

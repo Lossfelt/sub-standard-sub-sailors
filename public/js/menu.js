@@ -1,7 +1,14 @@
 // Startmeny og lobby: navn, opprette eller bli med i rom, legge til bots og starte spillet.
+import { CONFIG } from '/shared/config.js';
+
 const $ = (id) => document.getElementById(id);
 const NAME_KEY = 'ssss-name';
 const SOLO_BOTS = 3;
+const MAX_PLAYERS = CONFIG.maxPlayers;
+// Liten pikselubåt i 16 x 9 piksler. Skroget tar fargen fra currentColor.
+const SUB_ICON = '<path fill="currentColor" d="M6 1h3v2H6zM2 3h11v1h1v3h-1v1H2V7H1V4h1z"/>'
+  + '<path fill="#000" opacity=".35" d="M2 6h11v1H2z"/><path fill="#9ff1ff" d="M11 4h1v1h-1zM5 4h1v1H5z"/>'
+  + '<path fill="currentColor" opacity=".7" d="M14 4h1v3h-1zM0 5h1v1H0z"/>';
 
 function stored(key) {
   try {
@@ -53,7 +60,7 @@ export class Menu {
     const link = `${location.origin}/?rom=${this.room}`;
     try {
       await navigator.clipboard.writeText(link);
-      $('copy-link').textContent = 'lenken er kopiert';
+      $('copy-link').textContent = 'Kopiert!';
     } catch {
       this.error(`Kopier selv: ${link}`);
     }
@@ -75,33 +82,48 @@ export class Menu {
   renderLobby(msg) {
     const isHost = msg.players.find((p) => p.id === msg.you)?.host ?? false;
     $('room-code').textContent = msg.room;
-    $('copy-link').textContent = 'kopier lenken';
+    $('copy-link').textContent = 'Kopier lenke';
     $('host-controls').hidden = !isHost;
+    $('add-bot').hidden = !isHost;
     $('lobby-wait').hidden = isHost;
     $('timer').value = String(msg.opts.timer);
-    $('add-bot').disabled = msg.players.length >= 8;
+    $('add-bot').disabled = msg.players.length >= MAX_PLAYERS;
     $('start').disabled = msg.players.length < 2;
-    $('lobby-players').replaceChildren(...msg.players.map((p) => {
-      const li = document.createElement('li');
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.style.background = p.color;
-      const name = document.createElement('span');
-      name.className = 'name';
-      name.textContent = p.name;
-      const tag = document.createElement('span');
-      tag.className = 'tag';
-      tag.textContent = [p.id === msg.you && 'deg', p.host && 'vert', p.bot && 'bot'].filter(Boolean).join(', ');
-      li.append(dot, name, tag);
-      if (p.bot && isHost) {
-        const remove = document.createElement('button');
-        remove.className = 'link';
-        remove.textContent = 'fjern';
-        remove.setAttribute('aria-label', `Fjern ${p.name}`);
-        remove.addEventListener('click', () => this.net.send({ t: 'removeBot', id: p.id }));
-        li.append(remove);
-      }
-      return li;
-    }));
+    $('start').textContent = msg.players.length < 2 ? 'Trenger minst to ubåter' : 'Dykk!';
+    $('crew-count').textContent = `${msg.players.length}/${MAX_PLAYERS}`;
+    $('lobby-players').replaceChildren(...msg.players.map((p) => this.crewRow(p, msg.you, isHost)));
+  }
+
+  // Én rad i mannskapslisten: ubåt i spillerens farge, navn og merkelapper.
+  crewRow(p, you, isHost) {
+    const li = document.createElement('li');
+    li.classList.toggle('me', p.id === you);
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 16 9');
+    icon.setAttribute('class', 'crew-sub');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.style.color = p.color;
+    icon.innerHTML = SUB_ICON; // fast tegning, ikke brukerinnhold
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = p.name;
+    li.append(icon, name);
+    for (const [on, text] of [[p.id === you, 'deg'], [p.host, 'vert'], [p.bot, 'bot']]) {
+      if (!on) continue;
+      const badge = document.createElement('span');
+      badge.className = `badge ${text === 'deg' ? 'you' : ''}`;
+      badge.textContent = text;
+      li.append(badge);
+    }
+    if (p.bot && isHost) {
+      const remove = document.createElement('button');
+      remove.className = 'remove';
+      remove.textContent = '×';
+      remove.title = 'Fjern boten';
+      remove.setAttribute('aria-label', `Fjern ${p.name}`);
+      remove.addEventListener('click', () => this.net.send({ t: 'removeBot', id: p.id }));
+      li.append(remove);
+    }
+    return li;
   }
 }

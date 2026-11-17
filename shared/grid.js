@@ -65,6 +65,18 @@ export function speedOf(vx, vy) {
   return Math.max(Math.abs(vx), Math.abs(vy));
 }
 
+// Støyen en ubåt lager i en runde. idleRounds: hvor mange runder i strekk den har stått stille før.
+export function noiseOf(vx, vy, actionType, idleRounds = 0) {
+  const { noise } = CONFIG;
+  const still = vx === 0 && vy === 0;
+  return Math.max(
+    still ? Math.min(noise.idleMax, noise.idle + noise.idleGrowth * idleRounds) : noise.idle,
+    noise.perSpeed * speedOf(vx, vy),
+    actionType === 'fire' ? noise.torpedo : 0,
+    actionType === 'repair' ? noise.repair : 0,
+  );
+}
+
 // Baffles: i fart overdøver ubåtens egen propell alt som ligger rett bak den. Gjelder en kjegle
 // på rundt 37 grader til hver side av retningen rett bakover, helt ut til brettkanten.
 export function inBaffles(vx, vy, dx, dy) {

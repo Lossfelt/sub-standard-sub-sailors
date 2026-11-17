@@ -3,7 +3,7 @@
 import { CONFIG, DIRS } from '/shared/config.js';
 import { makeBoard } from '/shared/board.js';
 import {
-  accelerate, moveSub, speedOf, canTarget, areaCells, dist, linePath, inBounds, key, inBaffles,
+  accelerate, moveSub, canTarget, areaCells, dist, linePath, inBounds, key, inBaffles, noiseOf,
 } from '/shared/grid.js';
 import { attachInput } from './scene/input.js';
 import { World } from './world.js';
@@ -162,13 +162,10 @@ export class Game {
     this.slots = slots;
     hud.setPads(slots, order.accel ? this.slotFor(order.accel) : 'hold');
     hud.setAction(order.action.type, !!me.damage);
-    const noise = Math.max(
-      CONFIG.noise.idle,
-      CONFIG.noise.perSpeed * speedOf(v.vx, v.vy),
-      order.action.type === 'fire' ? CONFIG.noise.torpedo : 0,
-      order.action.type === 'repair' ? CONFIG.noise.repair : 0,
-    );
-    hud.setReadout(describeSpeed(v.vx, v.vy) + (moved.bumped ? ' (krasj!)' : ''), noise);
+    const noise = noiseOf(v.vx, v.vy, order.action.type, me.idle);
+    // Motoren hoster når den har gått på tomgang en stund.
+    const coughing = v.vx === 0 && v.vy === 0 && me.idle > 0;
+    hud.setReadout(describeSpeed(v.vx, v.vy) + (moved.bumped ? ' (krasj!)' : ''), noise, coughing);
     world.showGhost(me, this.sent ? null : moved);
     this.refreshSelection(moved.path.length > 0);
     hud.setLocked(this.sent);

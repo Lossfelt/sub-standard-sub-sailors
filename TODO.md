@@ -5,11 +5,9 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 
 ## Skal gjøres
 
-- Kanskje man ikke skal kunne stå stille, men alltid må ha minimum 1 i hastighet i en retning, slik at spillerne ikke bare venter i hvert sitt hjørne av brettet. Alternativt at hvis man slår av motoren så tar det litt tid å starte den igjen. (Under vurdering.)
 - **Gjenstående visuelle forbedringer:**
   - Skipsvrak og større ruiner som pynt (søyleruiner finnes nå som en variant av fjellruter)
   - Flere biotoper, for eksempel skipskirkegård (korallrev, dyphavsslette og isdekke finnes)
-  - Penere lobby
 
 ## Gjort nylig
 
@@ -20,7 +18,9 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - Skadet ubåt krenger og lekker bobler, større eksplosjon med trykkbølge
 - Finn meg-knapp (F), ikoner på handlingsknappene, egen dialog for å forlate spillet
 - Sluttoversikt med hvem som sank hvem i hvilken runde, og antall reparasjoner
-- Sonarskygge rett bak egen ubåt når den er i fart (the baffles)
+- Sonarskygge rett bak egen ubåt når den er i fart (the baffles), både for lytting og fokusert sonar
+- Motoren tåler ikke tomgang: støyen øker for hver runde i strekk man står stille, så det lønner seg ikke å vente i et hjørne
+- Penere lobby med romkode-skilt, mannskapsliste med ubåtikoner og sonarskjerm
 
 ## Nye tanker fra Levin
 

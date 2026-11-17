@@ -135,9 +135,11 @@ export class Hud {
     }
   }
 
-  setReadout(speedText, noise) {
+  // coughing: motoren har gått på tomgang og bråker mer for hver runde.
+  setReadout(speedText, noise, coughing = false) {
     this.el.speed.textContent = `Fart: ${speedText}`;
-    this.el.noise.textContent = `Støy: ${noise}`;
+    this.el.noise.textContent = `Støy: ${noise}${coughing ? ' (motoren hoster)' : ''}`;
+    this.el.noise.classList.toggle('cough', coughing);
   }
 
   setHint(text) {
