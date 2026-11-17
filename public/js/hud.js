@@ -186,9 +186,18 @@ export class Hud {
   }
 
   // canLeave: om knappen tilbake til lobbyen skal vises (verten underveis, alle etter spillet).
-  showBanner(title, text, canLeave = true) {
+  // lines: valgfri liste under teksten, for eksempel sluttoversikten.
+  showBanner(title, text, canLeave = true, lines = []) {
     this.el.bannerTitle.textContent = title;
     this.el.bannerText.textContent = text;
+    const list = $('banner-list');
+    list.replaceChildren(...lines.map((line) => {
+      const li = document.createElement('li');
+      li.textContent = line.text ?? line;
+      if (line.dim) li.className = 'dim';
+      return li;
+    }));
+    list.hidden = !lines.length;
     $('again').hidden = !canLeave;
     this.el.banner.classList.remove('mini');
     this.el.banner.hidden = false;

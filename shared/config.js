@@ -29,6 +29,10 @@ export const CONFIG = {
     repair: 20,
   },
 
+  sonar: {
+    baffleCos: 0.8, // baffles: døv sone bak ubåten i fart, cos 0.8 er omtrent 37 grader til hver side
+  },
+
   damage: {
     repairsNeeded: 2,
     roundsToRepair: 3,

@@ -21,7 +21,11 @@ export function buildView(match, id) {
   return {
     round: state.round,
     timeLeft: match.deadline ? Math.max(0, match.deadline - Date.now()) : null,
-    me: { x: me.x, y: me.y, vx: me.vx, vy: me.vy, alive: me.alive, damage: me.damage },
+    // Hvem som påførte skaden holdes hemmelig til spillet er over.
+    me: {
+      x: me.x, y: me.y, vx: me.vx, vy: me.vy, alive: me.alive,
+      damage: me.damage && { repairs: me.damage.repairs, left: me.damage.left },
+    },
     torpedoes: state.torpedoes.map((t) => torpedoFor(t, id, false)),
     alive: Object.fromEntries(state.subs.map((s) => [s.id, s.alive])),
     // Senkede spillere og sluttskjermen får se alt.
@@ -58,7 +62,7 @@ export function buildReport(match, ev, id, wasAlive) {
     explosions: ev.explosions.map((e) => ({
       x: e.x, y: e.y, kind: e.kind, mine: e.owner === id, onMe: e.victim === id,
     })),
-    sunk: ev.sunk,
+    sunk: ev.sunk.map(({ id, x, y, cause }) => ({ id, x, y, cause })), // hvem som sto bak, avsløres først til slutt
     hit: ev.hits[id] ?? null,
     // En kollisjon merkes bare av de to som støtte sammen.
     collision: ev.collisions.find((c) => c.ids.includes(id)) ?? null,

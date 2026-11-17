@@ -36,6 +36,8 @@ export class Match {
     this.winner = null;
     this.lastReports = {}; // siste rapport per spiller, til den som kobler til igjen midt i en runde
     this.wrecks = []; // senkninger er kjent for alle, og sendes på nytt ved gjenoppkobling
+    this.history = []; // senkninger med runde og hvem som sto bak, til sluttoversikten
+    this.repairs = Object.fromEntries(ids.map((id) => [id, 0])); // utførte reparasjoner per ubåt
     this.timer = null;
     this.deadline = null;
   }
@@ -60,8 +62,14 @@ export class Match {
       view: buildView(this, id),
       wrecks: this.wrecks,
       lastReport: this.lastReports[id] ?? null,
-      over: this.over ? { winner: this.winner } : null,
+      over: this.overInfo(),
     };
+  }
+
+  // Sluttoversikten: vinneren, hvem som sank hvem og når, og hvor mye hver har reparert.
+  overInfo() {
+    if (!this.over) return null;
+    return { winner: this.winner, history: this.history, repairs: this.repairs, rounds: this.state.round };
   }
 
   clearTimer() {
@@ -109,6 +117,8 @@ export class Match {
     this.over = ev.over;
     this.winner = ev.winner;
     this.wrecks.push(...ev.sunk.map(({ id, x, y }) => ({ id, x, y })));
+    this.history.push(...ev.sunk.map(({ id, cause, by }) => ({ round: ev.round, id, cause, by })));
+    for (const [id, action] of Object.entries(ev.actions)) if (action.type === 'repair') this.repairs[id] += 1;
     for (const [id, bot] of this.bots) {
       if (aliveBefore.has(id)) bot.observe(buildReport(this, ev, id, true), buildView(this, id));
     }
@@ -120,7 +130,7 @@ export class Match {
         t: 'round',
         view: buildView(this, p.id),
         report,
-        over: this.over ? { winner: this.winner } : null,
+        over: this.overInfo(),
       });
     }
     if (this.over) this.room.matchEnded();

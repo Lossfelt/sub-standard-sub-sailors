@@ -129,20 +129,42 @@ async function playSonar(game, report) {
   await effects.wait(0.35);
 }
 
+// Én linje per senkning, for eksempel "R 31: Admiral Lekk ble torpedert av Levin".
+function summaryLines(game, over) {
+  const subject = (id) => (id === game.you ? 'Du' : game.playerName(id));
+  const object = (id) => (id === game.you ? 'deg' : game.playerName(id));
+  const phrase = ({ cause, by }) => {
+    if (by == null) return cause === 'flooding' ? 'rakk ikke å reparere og sank' : SUNK_CAUSE[cause];
+    return {
+      direct: `ble torpedert av ${object(by)}`,
+      second: `ble torpedert for andre gang, av ${object(by)}`,
+      flooding: `rakk ikke å reparere etter treff fra ${object(by)}`,
+      collision: `kolliderte med ${object(by)} med skadet skrog og sank`,
+    }[cause];
+  };
+  const lines = (over.history ?? []).map((s) => `R ${s.round}: ${subject(s.id)} ${phrase(s)}.`);
+  const repairs = Object.entries(over.repairs ?? {})
+    .filter(([, count]) => count > 0)
+    .map(([id, count]) => `${id === game.you ? 'du' : game.playerName(id)} ${count}`);
+  if (repairs.length) lines.push({ text: `Reparasjoner: ${repairs.join(', ')}.`, dim: true });
+  return lines;
+}
+
 export function showGameOver(game, over) {
   const { hud } = game;
   game.over = true;
   hud.showOrders(false);
   game.stage.bottomInset = 0;
+  const lines = summaryLines(game, over);
   if (over.winner === game.you) {
     play('victory', 0.7);
-    hud.showBanner('Seier!', 'Du er den siste ubåten som flyter. Sånn noenlunde.');
+    hud.showBanner('Seier!', 'Du er den siste ubåten som flyter. Sånn noenlunde.', true, lines);
   } else if (over.winner) {
     play('defeat', 0.7);
-    hud.showBanner('Senket', `${game.playerName(over.winner)} vant. Havbunnen er i det minste rolig.`);
+    hud.showBanner('Senket', `${game.playerName(over.winner)} vant. Havbunnen er i det minste rolig.`, true, lines);
   } else {
     play('defeat', 0.7);
-    hud.showBanner('Uavgjort', 'Alle sank. Ingen vant. Typisk.');
+    hud.showBanner('Uavgjort', 'Alle sank. Ingen vant. Typisk.', true, lines);
   }
 }
 

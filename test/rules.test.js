@@ -58,7 +58,7 @@ test('torpedo treffer ubåt i målruten samme runde som den skytes ut', () => {
   const ev = resolveRound(state, fire, fixedRng([0.9]));
   assert.equal(ev.hits.b, 'indirect');
   assert.equal(ev.hits.a, undefined);
-  assert.deepEqual(state.subs[1].damage, { repairs: 0, left: 3 });
+  assert.deepEqual(state.subs[1].damage, { repairs: 0, left: 3, by: 'a' }); // husker hvem som skjøt
   assert.equal(state.torpedoes.length, 0);
 });
 
@@ -149,6 +149,17 @@ test('passiv sonar: støy minus avstand, og skygge bak fjell', () => {
 
   const shadow = twoSubs({ x: 0, y: 0 }, { x: 5, y: 0 }, [[2, 0]]);
   assert.deepEqual(resolveRound(shadow, fire, fixedRng([0])).contacts.a, []);
+});
+
+test('baffles: i fart hører man ikke det som ligger rett bak', () => {
+  // a kjører mot vest, bort fra b. b ligger rett bak og høres ikke, selv om den skyter.
+  const away = twoSubs({ x: 6, y: 0 }, { x: 10, y: 0 });
+  const fire = { a: { accel: 'W' }, b: { action: { type: 'fire', x: 10, y: 8 } } };
+  assert.deepEqual(resolveRound(away, fire, fixedRng([0])).contacts.a, []);
+  // Kjører a mot sør, ligger b på siden og høres.
+  const side = twoSubs({ x: 6, y: 0 }, { x: 10, y: 0 });
+  const south = { a: { accel: 'S' }, b: { action: { type: 'fire', x: 10, y: 8 } } };
+  assert.deepEqual(resolveRound(side, south, fixedRng([0])).contacts.a, [{ x: 10, y: 0 }]);
 });
 
 test('genererte brett er sammenhengende og har plass til alle', () => {

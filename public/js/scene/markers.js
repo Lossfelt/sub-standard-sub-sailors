@@ -44,6 +44,7 @@ export class Markers {
     this.textures = [outline, cross, ringTexture()];
     const layer = (opts) => new CellLayer(stage, opts);
     this.layers = {
+      baffle: layer({ color: '#000000', opacity: 0.22, height: 0.008 }), // døv sone bak egen ubåt
       shadow: layer({ color: '#000000', opacity: 0.45, height: 0.010 }), // sonarskygge
       area: layer({ color: '#58d6ff', opacity: 0.3, height: 0.012 }), // fokusområde under valg
       blocked: layer({ color: '#ff5340', opacity: 0.22, height: 0.012 }), // for nært til torpedo

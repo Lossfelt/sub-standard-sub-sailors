@@ -38,6 +38,7 @@ export const RULES_HTML = `
 <li>Støy: stille ${CONFIG.noise.idle}, motor ${CONFIG.noise.perSpeed} per fartsnivå, reparasjon ${CONFIG.noise.repair}, torpedoskudd ${CONFIG.noise.torpedo}.</li>
 <li><b>Fokuser sonar:</b> søk i et 3×3-område. Står du stille får du nøyaktig rute, er du i fart får du bare ja eller nei. Du hører ikke resten av kartet den runden.</li>
 <li>Fjell gir sonarskygge: du hører ikke det som ligger bak dem.</li>
+<li>I fart overdøver din egen propell alt som ligger rett bak deg. Den døve sonen vises som et svakt mørkt felt bak ubåten.</li>
 <li>Torpedoskudd, eksplosjoner og senkninger høres av alle.</li></ul>
 <h3>Torpedo</h3>
 <ul><li>Sikt på en rute minst ${T.minRange} ruter unna. Torpedoen går ${T.speed} ruter per runde og blir liggende ved målet.</li>

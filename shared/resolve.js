@@ -3,7 +3,7 @@
 import { CONFIG } from './config.js';
 import {
   key, inBounds, dist, linePath, hasLineOfSight, accelerate, moveSub,
-  speedOf, canTarget, areaCells,
+  speedOf, canTarget, areaCells, inBaffles,
 } from './grid.js';
 
 const T = CONFIG.torpedo;
@@ -17,18 +17,24 @@ function effectiveAction(state, sub, order) {
   return { type: 'listen' };
 }
 
-function sink(sub, cause, ev) {
+// by: hvem som står bak senkningen (den som skjøt, eller den man kolliderte med), hvis noen.
+function sink(sub, cause, ev, by = null) {
   sub.alive = false;
-  ev.sunk.push({ id: sub.id, x: sub.x, y: sub.y, cause });
+  ev.sunk.push({ id: sub.id, x: sub.x, y: sub.y, cause, by });
+}
+
+// Skaden husker hvem som påførte den, slik at en ubåt som ikke rakk å reparere vet hvem det var.
+function damage(by) {
+  return { repairs: 0, left: CONFIG.damage.roundsToRepair, by };
 }
 
 function applyHit(sub, torpedo, rng, ev) {
   const direct = rng.chance(T.directHitShare);
   ev.explosions.push({ x: sub.x, y: sub.y, kind: 'hit', victim: sub.id, owner: torpedo.owner });
   ev.hits[sub.id] = direct ? 'direct' : 'indirect';
-  if (direct) sink(sub, 'direct', ev);
-  else if (sub.damage) sink(sub, 'second', ev);
-  else sub.damage = { repairs: 0, left: CONFIG.damage.roundsToRepair };
+  if (direct) sink(sub, 'direct', ev, torpedo.owner);
+  else if (sub.damage) sink(sub, 'second', ev, torpedo.owner);
+  else sub.damage = damage(torpedo.owner);
 }
 
 // Torpedoen leter: ubåt i samme rute treffes alltid, ubåt i naborute med 50 % sjanse.
@@ -118,11 +124,11 @@ function runCollisions(state, rng, ev) {
       const moved = ev.moves[a.id].path.length > 0 || ev.moves[b.id].path.length > 0;
       if (!moved || !rng.chance(CONFIG.collisionChance)) continue;
       ev.collisions.push({ x: a.x, y: a.y, ids: [a.id, b.id] });
-      for (const sub of [a, b]) {
+      for (const [sub, other] of [[a, b], [b, a]]) {
         Object.assign(sub, { vx: 0, vy: 0 });
         ev.hits[sub.id] = 'collision';
-        if (sub.damage) sink(sub, 'collision', ev);
-        else sub.damage = { repairs: 0, left: CONFIG.damage.roundsToRepair };
+        if (sub.damage) sink(sub, 'collision', ev, other.id);
+        else sub.damage = damage(other.id);
       }
     }
   }
@@ -138,7 +144,7 @@ function runRepairs(state, ev) {
       sub.damage = null;
       ev.repairs[sub.id] = { done: true };
     } else if (sub.damage.left <= 0) {
-      sink(sub, 'flooding', ev);
+      sink(sub, 'flooding', ev, sub.damage.by);
     } else {
       ev.repairs[sub.id] = { done: false, ...sub.damage };
     }
@@ -168,6 +174,7 @@ function passiveSonar(state, listener, rng, ev) {
   for (const target of state.subs) {
     if (!target.alive || target.id === listener.id) continue;
     if (!hasLineOfSight(state.board, listener.x, listener.y, target.x, target.y)) continue;
+    if (inBaffles(listener.vx, listener.vy, target.x - listener.x, target.y - listener.y)) continue;
     const chance = ev.noise[target.id] - dist(listener.x, listener.y, target.x, target.y);
     if (rng.chance(chance / 100)) contacts.push({ x: target.x, y: target.y });
   }

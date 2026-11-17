@@ -3,7 +3,7 @@
 import { CONFIG, DIRS } from '/shared/config.js';
 import { makeBoard } from '/shared/board.js';
 import {
-  accelerate, moveSub, speedOf, canTarget, areaCells, dist, linePath, inBounds, key,
+  accelerate, moveSub, speedOf, canTarget, areaCells, dist, linePath, inBounds, key, inBaffles,
 } from '/shared/grid.js';
 import { attachInput } from './scene/input.js';
 import { World } from './world.js';
@@ -148,10 +148,12 @@ export class Game {
     if (!me.alive || this.over) {
       world.showGhost(me, null);
       world.markers.clearSelection();
+      world.markers.set('baffle', []);
       return;
     }
     const v = accelerate(me.vx, me.vy, order.accel);
     const moved = moveSub(this.board, me.x, me.y, v.vx, v.vy);
+    world.markers.set('baffle', this.baffleCells(moved));
     const slots = {};
     for (const dir of Object.keys(DIRS)) {
       const a = accelerate(me.vx, me.vy, dir);
@@ -201,6 +203,17 @@ export class Game {
     }
     markers.set('target', targets);
     this.hud.setHint(hint);
+  }
+
+  // Rutene bak ubåten der vi ikke vil høre noe, ut fra hvor vi ender og farten vi har da.
+  baffleCells({ x, y, vx, vy }) {
+    const cells = [];
+    for (let cy = 0; cy < this.board.size; cy++) {
+      for (let cx = 0; cx < this.board.size; cx++) {
+        if (inBaffles(vx, vy, cx - x, cy - y)) cells.push([cx, cy]);
+      }
+    }
+    return cells;
   }
 
   tooClose(me) {

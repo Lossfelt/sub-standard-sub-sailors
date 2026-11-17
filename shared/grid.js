@@ -65,6 +65,14 @@ export function speedOf(vx, vy) {
   return Math.max(Math.abs(vx), Math.abs(vy));
 }
 
+// Baffles: i fart overdøver ubåtens egen propell alt som ligger rett bak den. Gjelder en kjegle
+// på rundt 37 grader til hver side av retningen rett bakover, helt ut til brettkanten.
+export function inBaffles(vx, vy, dx, dy) {
+  if ((vx === 0 && vy === 0) || (dx === 0 && dy === 0)) return false;
+  const cos = (vx * dx + vy * dy) / (Math.hypot(vx, vy) * Math.hypot(dx, dy));
+  return cos <= -CONFIG.sonar.baffleCos;
+}
+
 export function canTarget(board, fromX, fromY, tx, ty) {
   return !isBlocked(board, tx, ty) && dist(fromX, fromY, tx, ty) >= CONFIG.torpedo.minRange;
 }
