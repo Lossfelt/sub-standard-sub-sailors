@@ -1,21 +1,10 @@
-// Kaustikk: det bølgende lysmønsteret sollys lager på havbunnen. Et gjennomsiktig lag rett over
-// flisene som legger lys til, regnet ut i grove ruter slik at mønsteret også blir pikselert.
-//
-// To utgaver mens vi sammenligner (midlertidig):
-//  0: matematisk mønster av sammenflettede sinusbølger, med myke overganger.
-//  1: to Voronoi-nett som glir forbi hverandre og bare lyser der de krysser, avrundet til to
-//     lystrinn slik at det blir rene pikselflekker.
+// Kaustikk: det bølgende lysmønsteret sollys lager på havbunnen. To Voronoi-nett glir forbi
+// hverandre og lyser bare der de krysser. Lyset avrundes til fire trinn på faste lyspiksler, så
+// det holder seg som pikselgrafikk. Et gjennomsiktig lag rett over flisene som legger lys til.
 import * as THREE from 'three';
 
 const WEB = 128; // Voronoi-bildet er WEB x WEB piksler
 const WEB_DENSITY = 16; // nettpiksler per rute på nært hold
-
-// Felles bryter for alle brett, slik at knappen virker også etter nytt spill.
-const MODE = { value: 0 };
-export function toggleCausticsStyle() {
-  MODE.value = 1 - MODE.value;
-  return MODE.value;
-}
 
 const VERTEX = /* glsl */ `
   varying vec2 vCell;
@@ -28,32 +17,17 @@ const VERTEX = /* glsl */ `
 
 const FRAGMENT = /* glsl */ `
   uniform float uTime;
-  uniform float uTexels; // lyspiksler per rute
+  uniform float uTexels; // lyspiksler per rute er det dobbelte av denne
   uniform float uStrength;
-  uniform float uMode;
   uniform sampler2D uWeb;
   varying vec2 vCell;
-
-  // Kjent, billig kaustikkmønster: noen runder med sammenflettede sinusbølger.
-  float caustic(vec2 p, float t) {
-    vec2 i = p;
-    float c = 1.0;
-    const float inten = 0.005;
-    for (int n = 0; n < 4; n++) {
-      float tt = t * (1.0 - 3.5 / float(n + 1));
-      i = p + vec2(cos(tt - i.x) + sin(tt + i.y), sin(tt - i.y) + cos(tt + i.x));
-      c += 1.0 / length(vec2(p.x / (sin(i.x + tt) / inten), p.y / (cos(i.y + tt) / inten)));
-    }
-    c = 1.17 - pow(c / 4.0, 1.4);
-    return pow(abs(c), 8.0);
-  }
 
   // Nettet slås opp med myk utjevning, så det glir jevnt i stedet for å hoppe ett piksel om gangen.
   float web(vec2 pixel) {
     return texture2D(uWeb, pixel / ${WEB.toFixed(1)}).r;
   }
 
-  float voronoiCaustic() {
+  void main() {
     // Ruten deles i faste lyspiksler. Utzoomet blir de grovere, men mønsteret beholder størrelsen.
     float step = ${WEB_DENSITY.toFixed(1)} / (uTexels * 2.0);
     vec2 pixel = (floor(vCell * uTexels * 2.0) + 0.5) * step;
@@ -63,25 +37,8 @@ const FRAGMENT = /* glsl */ `
     // Det andre laget er snudd og glir en annen vei, så de ikke følger hverandre.
     vec2 b = vec2(pixel.y, -pixel.x) - sway + vec2(-uTime * 3.4, uTime * 4.1) + 57.0;
     // Fire lystrinn gir duse overganger, men holder flatene rene.
-    return floor(web(a) * web(b) * 4.0 + 0.3) / 4.0;
-  }
-
-  void main() {
-    float light;
-    if (uMode > 0.5) {
-      light = voronoiCaustic() * 0.15;
-    } else {
-      vec2 cell = floor(vCell * uTexels) / uTexels;
-      // Ett mønster alene gjentar seg med få ruters mellomrom. To mønstre i ulik skala, det ene
-      // dreid en skjev vinkel, gjentar seg nesten aldri likt. En langsom, stor bølge gjør i
-      // tillegg at noen deler av brettet er lysere enn andre.
-      vec2 turned = mat2(0.80, -0.60, 0.60, 0.80) * cell;
-      float first = caustic(cell * 1.9 - 250.0, uTime * 0.35 + 23.0);
-      float second = caustic(turned * 1.37 + 91.0, uTime * 0.29 + 7.0);
-      float swell = 0.65 + 0.35 * sin(cell.x * 0.31 + uTime * 0.11) * sin(cell.y * 0.23 - uTime * 0.08 + 1.7);
-      light = max(first, second) * swell;
-    }
-    gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * uStrength, 1.0);
+    float light = floor(web(a) * web(b) * 4.0 + 0.3) / 4.0;
+    gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * 0.3 * uStrength, 1.0);
   }
 `;
 
@@ -116,8 +73,7 @@ export function makeCaustics(size) {
   const web = webTexture();
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      uTime: { value: 0 }, uSize: { value: size }, uTexels: { value: 8 }, uStrength: { value: 0.42 },
-      uMode: MODE, uWeb: { value: web },
+      uTime: { value: 0 }, uSize: { value: size }, uTexels: { value: 8 }, uStrength: { value: 0.42 }, uWeb: { value: web },
     },
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,

@@ -84,10 +84,24 @@ export class Life {
     });
     this.fish.mesh.instanceMatrix.needsUpdate = true;
 
+    // Punktene har fast størrelse på skjermen, så utzoomet ville røyken dekket mye av brettet.
+    // Der blir den lavere, tynnere og har mindre punkter.
+    const detail = this.stage.detail ?? 1;
     for (const { points, info, style } of this.plumes) {
       const pos = points.geometry.attributes.position;
+      const smoke = style === SMOKE;
+      const top = smoke ? style.top * (0.5 + 0.5 * detail) : style.top;
+      const keep = smoke ? Math.ceil(style.count * (0.45 + 0.55 * detail)) : style.count;
+      if (smoke) {
+        points.material.size = detail < 0.5 ? 2 : 3;
+        points.material.opacity = style.opacity * (0.6 + 0.4 * detail);
+      }
       info.forEach((b, i) => {
-        const rise = (b.offset + time * b.speed) % style.top;
+        if (i % style.count >= keep) {
+          pos.setXYZ(i, 0, -100, 0); // skjult under brettet
+          return;
+        }
+        const rise = (b.offset + time * b.speed) % top;
         pos.setXYZ(
           i,
           b.source.x + Math.sin(time * 2 + b.phase) * style.spread * (1 + rise),
