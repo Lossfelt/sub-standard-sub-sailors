@@ -55,6 +55,7 @@ function openRules() {
 }
 
 $('help').addEventListener('click', openRules);
+$('find').addEventListener('click', () => game.findMe());
 $('menu-help').addEventListener('click', openRules);
 $('leave-lobby').addEventListener('click', leaveRoom);
 $('sound').classList.toggle('off', isMuted());
@@ -65,6 +66,7 @@ window.addEventListener('keydown', (e) => {
   if (screens.game.hidden || target.matches('input, select, textarea') || $('rules').open) return;
   if (e.key === 'q' || e.key === 'Q') game.rotate(-1);
   else if (e.key === 'e' || e.key === 'E') game.rotate(1);
+  else if (e.key === 'f' || e.key === 'F') game.findMe();
   else if (PAN_KEYS[e.key.toLowerCase()]) stage.panBy(...PAN_KEYS[e.key.toLowerCase()]);
   else if (ZOOM_KEYS[e.key]) stage.zoomBy(ZOOM_KEYS[e.key]);
   else if (e.key === 'Enter' && !target.matches('button')) game.send();

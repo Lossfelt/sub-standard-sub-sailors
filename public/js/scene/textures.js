@@ -1,15 +1,16 @@
 // Felles hjelper for pikselteksturer tegnet i kode, og maskene til markørene på brettet.
 import * as THREE from 'three';
 
-export function pixelTexture(width, height, draw) {
+// smooth: bruk mipmaps når teksturen krympes (zoomet ut), men behold skarpe piksler på nært hold.
+export function pixelTexture(width, height, draw, smooth = false) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   draw(canvas.getContext('2d'), width, height);
   const texture = new THREE.CanvasTexture(canvas);
   texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
+  texture.minFilter = smooth ? THREE.LinearMipmapLinearFilter : THREE.NearestFilter;
+  texture.generateMipmaps = smooth;
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }

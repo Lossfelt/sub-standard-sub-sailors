@@ -238,3 +238,8 @@
 @media (prefers-reduced-motion: reduce) {
   .hull.damaged { animation: none; }
 }
+
+/* Små pikselikoner foran teksten på handlingsknappene. */
+.act .ico { width: 14px; height: 14px; margin-right: 5px; vertical-align: -2px; }
+.ico path { fill: none; stroke: currentColor; stroke-width: 1; shape-rendering: crispEdges; }
+@media (max-width: 700px) { .act .ico { width: 11px; height: 11px; margin-right: 3px; } }

@@ -267,6 +267,12 @@ export class Game {
     if (this.cursor) this.onCell(this.cursor);
   }
 
+  // Sentrerer og følger egen ubåt. Tilskuere uten ubåt får bare zoomet ut igjen.
+  findMe() {
+    if (!this.world) return;
+    if (this.view.me.alive) this.stage.followPoint(this.world.sub.position);
+  }
+
   rotate(step) {
     this.stage.rotate(step);
     if (this.world) this.refreshOrders();

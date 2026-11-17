@@ -7,10 +7,24 @@ import { tileTextures, cliffTexture } from './groundtex.js';
 import { buildRocks, buildDecor } from './props.js';
 import { makeCaustics } from './water.js';
 
-const STONE_TINTS = ['#6f9cae', '#6691a5', '#7ba7b4'];
-const MOSS_TINTS = ['#5aa886', '#4f9c7c', '#66b390'];
-const SAND_TINTS = ['#b9b48f', '#aeab8c', '#c2ba92'];
-const ROCK_FLOOR_TINT = '#4f6c7a';
+// Biotoper: samme regler, men ulikt utseende fra spill til spill. Tallene er andeler og terskler.
+const THEMES = [
+  { // korallrev: grønt og frodig
+    stone: ['#6f9cae', '#6691a5', '#7ba7b4'], moss: ['#5aa886', '#4f9c7c', '#66b390'], sand: ['#b9b48f', '#aeab8c', '#c2ba92'],
+    rockFloor: '#4f6c7a', rocks: ['#ffffff', '#e4edf2', '#d6e2ea', '#f1eee2'],
+    mossFrom: 0.5, sandFrom: 0.68, smokers: 0.3, ruins: 0.15, decor: 1,
+  },
+  { // dyphavsslette: mørkt, karrig og vulkansk
+    stone: ['#5b6a96', '#52608c', '#6674a2'], moss: ['#6f6aa6', '#64609b'], sand: ['#7c8196', '#74798f'],
+    rockFloor: '#3d4566', rocks: ['#c9c2e6', '#b5b0d6', '#d6d0ee'],
+    mossFrom: 0.8, sandFrom: 0.6, smokers: 0.6, ruins: 0.05, decor: 0.45,
+  },
+  { // isdekke: lyst og kaldt, med snø i stedet for sand
+    stone: ['#a5cbdc', '#98c1d4', '#b4d6e4'], moss: ['#8fcfc6', '#84c4bd'], sand: ['#e3edf2', '#d8e6ee'],
+    rockFloor: '#7fa3b6', rocks: ['#ffffff', '#f2fbff', '#e6f4fa'],
+    mossFrom: 0.82, sandFrom: 0.5, smokers: 0.08, ruins: 0.12, decor: 0.6,
+  },
+];
 
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
@@ -52,19 +66,19 @@ function patchNoise(size, rng) {
   };
 }
 
-const TILE_MIX = ['plain', 'plain', 'plain', 'plain', 'cracked', 'cracked', 'cobbles', 'cobbles'];
+const TILE_MIX = ['plain', 'plain', 'plain', 'plain', 'cracked', 'cracked', 'cobbles', 'cobbles', 'bricks'];
 
 // Hvilken slags flis som ligger i en rute: mose og sand i hver sine flekker, ellers stein.
-function tileKind(rng, rock, mossiness, sandiness) {
+function tileKind(rng, theme, rock, mossiness, sandiness) {
   if (rock) return 'plain';
-  if (mossiness > 0.5) return 'moss';
-  if (sandiness > 0.68) return 'sand';
+  if (mossiness > theme.mossFrom) return 'moss';
+  if (sandiness > theme.sandFrom) return 'sand';
   if (rng.chance(0.035)) return 'glyph';
   return rng.pick(TILE_MIX);
 }
 
 // Flisene deles på ett nett per teksturvariant.
-function buildTiles(stage, board, rng) {
+function buildTiles(stage, board, rng, theme) {
   const { size } = board;
   const geometry = new THREE.BoxGeometry(0.94, 0.16, 0.94);
   const kinds = {};
@@ -85,11 +99,11 @@ function buildTiles(stage, board, rng) {
     for (let x = 0; x < size; x++) {
       const rock = board.rocks.has(key(x, y));
       const mossiness = THREE.MathUtils.smoothstep(moss(x, y), 0.35, 0.7);
-      const kind = tileKind(rng, rock, mossiness, sand(x, y));
+      const kind = tileKind(rng, theme, rock, mossiness, sand(x, y));
       const mesh = rng.pick(kinds[kind]);
-      color.set(rng.pick(STONE_TINTS)).lerp(mossColor.set(rng.pick(MOSS_TINTS)), mossiness * 0.6);
-      if (kind === 'sand') color.set(rng.pick(SAND_TINTS));
-      if (rock) color.set(ROCK_FLOOR_TINT);
+      color.set(rng.pick(theme.stone)).lerp(mossColor.set(rng.pick(theme.moss)), mossiness * 0.6);
+      if (kind === 'sand') color.set(rng.pick(theme.sand));
+      if (rock) color.set(theme.rockFloor);
       dummy.position.copy(stage.cellToWorld(x, y, -0.08 - rng.next() * 0.05));
       // Stein kan ligge alle veier, men tegn og sandbølger skal peke samme vei over hele brettet.
       dummy.rotation.set(0, kind === 'sand' || kind === 'glyph' ? 0 : rng.int(4) * (Math.PI / 2), 0);
@@ -106,11 +120,12 @@ export function buildTerrain(stage, board, seed) {
   const rng = makeRng(seed ^ 0x5eabed);
   const group = new THREE.Group();
   const caustics = makeCaustics(board.size);
-  const rocks = buildRocks(stage, board, rng);
-  const decor = buildDecor(stage, board, rng);
+  const theme = rng.pick(THEMES);
+  const rocks = buildRocks(stage, board, rng, theme);
+  const decor = buildDecor(stage, board, rng, theme.decor);
   group.add(
     buildBase(board.size, rng),
-    ...buildTiles(stage, board, rng),
+    ...buildTiles(stage, board, rng, theme),
     caustics.mesh,
     ...rocks.meshes,
     ...decor.meshes,

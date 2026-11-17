@@ -10,6 +10,7 @@ import { COMPASS, cellName } from './texts.js';
 const SUB_HEIGHT = 0.45;
 const TORPEDO_HEIGHT = 0.3;
 const RING = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const TMP = new THREE.Vector3();
 
 export class World {
   constructor(stage, board, seed, players, you) {
@@ -64,7 +65,35 @@ export class World {
   placeSub(me) {
     this.sub.visible = me.alive;
     this.sub.position.copy(this.at(me.x, me.y, SUB_HEIGHT));
+    this.setDamaged(this.sub, !!me.damage);
     if (me.vx || me.vy) setHeading(this.sub, me.vx, me.vy);
+  }
+
+  // En skadet ubåt krenger, ligger med nesen ned og lekker bobler.
+  setDamaged(model, damaged) {
+    model.userData.damaged = damaged;
+    model.rotation.x = damaged ? 0.38 : 0;
+    model.rotation.z = damaged ? -0.14 : 0;
+  }
+
+  // Bobler bak alt som beveger seg, og fra skadede skrog.
+  emitBubbles(dt) {
+    const { effects } = this;
+    for (const model of [this.sub, ...this.others.values()]) {
+      if (!model.visible) continue;
+      const last = model.userData.last ?? (model.userData.last = model.position.clone());
+      const moved = Math.hypot(model.position.x - last.x, model.position.z - last.z);
+      last.copy(model.position);
+      if (moved > 0.0015 && Math.random() < dt * 40) {
+        const yaw = model.rotation.y;
+        TMP.set(model.position.x - Math.cos(yaw) * 0.75, model.position.y, model.position.z + Math.sin(yaw) * 0.75);
+        effects.bubble(TMP, 0.07);
+      }
+      if (model.userData.damaged && Math.random() < dt * 14) effects.bubble(TMP.copy(model.position).setY(model.position.y + 0.2), 0.15);
+    }
+    for (const entry of this.torpedoes.values()) {
+      if (Math.random() < dt * (entry.busy ? 60 : 8)) effects.bubble(entry.model.position, 0.03);
+    }
   }
 
   // Gjennomsiktig ubåt der vi havner neste runde med valgt manøver.
@@ -104,10 +133,12 @@ export class World {
       model.userData.sinking = true;
       const from = model.position.clone();
       const bottom = this.at(x, y, 0.16);
+      const { x: roll, z: pitch } = model.rotation;
       await this.effects.tween(0.9, (t) => {
         model.position.lerpVectors(from, bottom, t);
-        model.rotation.x = t * 0.5;
-        model.rotation.z = t * 0.35;
+        model.rotation.x = roll + (0.5 - roll) * t;
+        model.rotation.z = pitch + (0.2 - pitch) * t;
+        if (Math.random() < 0.5) this.effects.bubble(model.position, 0.2);
       });
     }
     this.addWreck(id, x, y, model?.rotation.y);
@@ -209,7 +240,9 @@ export class World {
         model.position.copy(target);
         this.stage.scene.add(model);
         this.others.set(s.id, model);
-      } else if (model.position.distanceTo(target) > 0.01) {
+      }
+      this.setDamaged(model, s.damaged);
+      if (model.position.distanceTo(target) > 0.05) {
         setHeading(model, target.x - model.position.x, target.z - model.position.z);
         this.effects.moveAlong(model, [target], 0.5);
       }
@@ -249,6 +282,7 @@ export class World {
       if (propeller) propeller.rotation.x += dt * 9;
     }
     this.animateTorpedoes(time);
+    this.emitBubbles(dt);
   }
 
   dispose() {

@@ -69,6 +69,7 @@
         <button id="rot-right" class="icon-btn" aria-label="Snu brettet mot høyre" title="Snu brettet (E)">&#8635;</button>
         <button id="zoom-in" class="icon-btn zoom-btn" aria-label="Zoom inn" title="Zoom inn (+)">+</button>
         <button id="zoom-out" class="icon-btn zoom-btn" aria-label="Zoom ut" title="Zoom ut (-)">&minus;</button>
+        <button id="find" class="icon-btn" aria-label="Finn og følg min ubåt" title="Finn min ubåt (F)">&#8982;</button>
         <button id="sound" class="icon-btn" aria-label="Lyd av eller på" title="Lyd">&#9835;</button>
         <button id="help" class="icon-btn" aria-label="Regler" title="Regler">?</button>
         <button id="quit" class="icon-btn" aria-label="Forlat spillet" title="Forlat spillet">&#10005;</button>
@@ -105,10 +106,10 @@
         </div>
       </div>
       <div class="actions" role="group" aria-label="Handling">
-        <button data-action="listen" class="act">Lytt</button>
-        <button data-action="focus" class="act">Fokuser sonar</button>
-        <button data-action="fire" class="act">Torpedo</button>
-        <button data-action="repair" class="act">Reparer</button>
+        <button data-action="listen" class="act"><svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h1M4 4v4M6 2v8M8 4v4M10 5v2"/></svg>Lytt</button>
+        <button data-action="focus" class="act"><svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v3M6 8v3M1 6h3M8 6h3M4 4h4v4h-4z"/></svg>Fokuser sonar</button>
+        <button data-action="fire" class="act"><svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 4v4M2 6h7M9 5v2M10 6h1M3 5h5M3 7h5"/></svg>Torpedo</button>
+        <button data-action="repair" class="act"><svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 10l5-5M7 2h3M10 2v3M7 2v3h3"/></svg>Reparer</button>
       </div>
       <p id="hint" class="hint"></p>
       <button id="send" class="btn primary">Send ordre</button>

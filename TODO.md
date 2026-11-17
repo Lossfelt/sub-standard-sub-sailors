@@ -5,14 +5,10 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 
 ## Skal gjøres
 
-- **Flere visuelle forbedringer.** Konkrete kandidater:
-  - Boblespor bak torpedoer og ubåter i fart, slik at bevegelse leses tydeligere
-  - Skadet ubåt lekker bobler og krenger, vrak som ser ødelagte ut (knekt skrog)
-  - Større og mer variert eksplosjon, med trykkbølge som brer seg over flisene
-  - Flere biotoper per brett: korallrev, dyphavsslette, isdekke, skipskirkegård
-  - Store pyntegjenstander som ruiner og skipsvrak (som på tittelbildet)
-  - Ikoner på handlingsknappene, og en penere lobby
-  - Kameraet følger egen ubåt mykt når man er zoomet inn, og en knapp for "finn meg"
+- **Gjenstående visuelle forbedringer:**
+  - Skipsvrak og større ruiner som pynt (søyleruiner finnes nå som en variant av fjellruter)
+  - Flere biotoper, for eksempel skipskirkegård (korallrev, dyphavsslette og isdekke finnes)
+  - Penere lobby
 
 ## Nye tanker fra Levin
 

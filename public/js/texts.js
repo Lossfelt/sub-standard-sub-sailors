@@ -56,7 +56,7 @@ export const RULES_HTML = `
 <li><b>Hvitt kryss:</b> en eksplosjon alle hørte, vises i to runder.</li>
 <li><b>Rødlig felt</b> rundt deg når du velger torpedo: for nært til å sikte på. <b>Lyse ruter</b> viser torpedoens bane.</li>
 <li><b>Blått felt:</b> området du fokuserer sonaren på. Etter søket er det <b>oransje</b> hvis det er en ubåt der, gråblått hvis tomt, og <b>mørkt</b> der fjell gir sonarskygge.</li>
-<li><b>Mørk, veltet ubåt:</b> et vrak. <b>Rykende skorsteiner</b> er undersjøiske vulkaner og virker som fjell. Bokstaver og tall langs kanten gir rutenavn som "F7".</li>
+<li><b>Mørk, veltet ubåt:</b> et vrak. <b>Rykende skorsteiner</b> (vulkaner) og <b>søyleruiner</b> virker som fjell. En ubåt som <b>krenger og lekker bobler</b> er skadet. Bokstaver og tall langs kanten gir rutenavn som "F7".</li>
 <li>Tang, koraller, sjøstjerner, krystaller, fisk og bobler er bare pynt.</li></ul>
 <h3>Styring</h3>
 <ul><li>Dra i brettet (eller bruk W, A, S, D) for å flytte utsnittet. Rull, knip eller bruk + og - for å zoome. Q og E snur brettet. Piltastene flytter rutemarkøren, mellomrom velger ruten og Enter sender ordre.</li></ul>`;

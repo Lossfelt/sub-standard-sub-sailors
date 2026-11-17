@@ -25,6 +25,7 @@ export class Stage {
     this.pan = new THREE.Vector2();
     this.bottomInset = 0; // CSS-piksler nederst som dekkes av ordrepanelet
     this.shake = 0;
+    this.follow = null; // punkt i verden som utsnittet følger mykt når man er zoomet inn
     this.labels = new Set();
     this.frameCallbacks = [];
     this.lastTime = 0;
@@ -110,6 +111,7 @@ export class Stage {
 
   // Flytter utsnittet. dx/dy er CSS-piksler slik de kommer fra pekeren.
   panBy(dx, dy) {
+    if (dx || dy) this.follow = null; // spilleren tar over utsnittet selv
     const unitsPerPixel = (this.camera.top - this.camera.bottom) / this.zoom / this.canvas.clientHeight;
     const limit = this.boardSize * 0.6;
     this.pan.x = THREE.MathUtils.clamp(this.pan.x - dx * unitsPerPixel, -limit, limit);
@@ -136,6 +138,22 @@ export class Stage {
     }
     this.zoom = after;
     this.panBy(0, 0); // holder utsnittet innenfor grensene
+  }
+
+  // Zoomer inn om nødvendig og lar utsnittet følge punktet til spilleren flytter det selv.
+  followPoint(point) {
+    this.follow = point;
+    if (this.zoom < 1.6) this.zoom = 2;
+  }
+
+  updateFollow(dt) {
+    if (!this.follow || this.zoom <= 1.01) return;
+    const m = this.camera.matrixWorld;
+    const right = new THREE.Vector3().setFromMatrixColumn(m, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(m, 1);
+    const limit = this.boardSize * 0.6;
+    const target = new THREE.Vector2(this.follow.dot(right), this.follow.clone().setY(0).dot(up)).clampScalar(-limit, limit);
+    this.pan.lerp(target, Math.min(1, dt * 4));
   }
 
   cellToWorld(x, y, height = 0) {
@@ -201,6 +219,7 @@ export class Stage {
     const diff = this.targetYaw - this.yaw;
     this.yaw += Math.abs(diff) < 0.002 ? diff : diff * Math.min(1, dt * 9);
     this.shake *= 0.9;
+    this.updateFollow(dt);
     this.updateCamera();
     for (const callback of this.frameCallbacks) callback(dt, time / 1000);
     this.post.render(this.scene, this.camera, time / 1000);
