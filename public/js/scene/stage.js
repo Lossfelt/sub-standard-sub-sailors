@@ -95,6 +95,8 @@ export class Stage {
     cam.bottom = -halfH;
     cam.zoom = this.zoom;
     cam.updateProjectionMatrix();
+    // Hvor mange spillpiksler en rute er bred på skjermen. Brukes til å forenkle detaljer.
+    this.cellPixels = (this.renderer.domElement.height * this.zoom) / (2 * halfH);
     const c = Math.cos(PITCH);
     cam.position.set(c * Math.sin(this.yaw), Math.sin(PITCH), c * Math.cos(this.yaw))
       .multiplyScalar(CAMERA_DISTANCE);

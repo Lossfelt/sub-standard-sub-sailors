@@ -39,7 +39,8 @@ const hud = new Hud({
   onZoom: (factor) => stage.zoomBy(factor),
   onAgain: () => net.send({ t: 'again' }),
   onQuit: () => {
-    if (window.confirm('Vil du forlate spillet?')) leaveRoom();
+    $('leave').returnValue = ''; // Escape lukker uten å forlate
+    $('leave').showModal();
   },
   onLayout: () => {
     stage.bottomInset = hud.bottomInset();
@@ -58,12 +59,15 @@ $('help').addEventListener('click', openRules);
 $('find').addEventListener('click', () => game.findMe());
 $('menu-help').addEventListener('click', openRules);
 $('leave-lobby').addEventListener('click', leaveRoom);
+$('leave').addEventListener('close', () => {
+  if ($('leave').returnValue === 'leave') leaveRoom();
+});
 $('sound').classList.toggle('off', isMuted());
 $('sound').addEventListener('click', () => $('sound').classList.toggle('off', toggleMute()));
 
 window.addEventListener('keydown', (e) => {
   const target = e.target instanceof Element ? e.target : document.body;
-  if (screens.game.hidden || target.matches('input, select, textarea') || $('rules').open) return;
+  if (screens.game.hidden || target.matches('input, select, textarea') || $('rules').open || $('leave').open) return;
   if (e.key === 'q' || e.key === 'Q') game.rotate(-1);
   else if (e.key === 'e' || e.key === 'E') game.rotate(1);
   else if (e.key === 'f' || e.key === 'F') game.findMe();

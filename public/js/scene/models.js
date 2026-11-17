@@ -24,35 +24,19 @@ export function makeSub(colorHex, variant = 'normal') {
   const group = new THREE.Group();
   group.rotation.order = 'YXZ'; // kurs først, så krenging (x) og stamping (z) i ubåtens egne akser
   const propeller = part(new THREE.BoxGeometry(0.03, 0.22, 0.05), darkMat, -0.43, 0, 0);
-  // Akterenden er en egen del, slik at vrak kan ligge knekt i to.
-  const stern = new THREE.Group();
-  stern.add(
+  const hull = part(new THREE.CapsuleGeometry(0.16, 0.34, 2, 8), hullMat);
+  hull.rotation.z = Math.PI / 2;
+  group.add(
+    hull,
     part(new THREE.BoxGeometry(0.1, 0.3, 0.03), darkMat, -0.34, 0, 0),
     part(new THREE.BoxGeometry(0.1, 0.03, 0.3), darkMat, -0.34, 0, 0),
     propeller,
-  );
-  if (wreck) {
-    const bow = part(new THREE.CapsuleGeometry(0.16, 0.12, 2, 8), hullMat, 0.13, 0, 0);
-    const aft = part(new THREE.CapsuleGeometry(0.16, 0.1, 2, 8), hullMat, -0.17, 0, 0);
-    bow.rotation.z = Math.PI / 2;
-    aft.rotation.z = Math.PI / 2;
-    stern.add(aft, part(new THREE.BoxGeometry(0.03, 0.26, 0.26), glassMat, -0.045, 0, 0)); // mørkt bruddsted
-    stern.rotation.set(0.25, 0.5, -0.2);
-    stern.position.set(-0.05, -0.04, 0.09);
-    group.add(bow);
-  } else {
-    const hull = part(new THREE.CapsuleGeometry(0.16, 0.34, 2, 8), hullMat);
-    hull.rotation.z = Math.PI / 2;
-    group.add(hull);
-  }
-  group.add(
-    stern,
     part(new THREE.BoxGeometry(0.17, 0.13, 0.13), hullMat, 0.03, 0.19, 0),
     part(new THREE.BoxGeometry(0.035, 0.14, 0.035), darkMat, 0.07, 0.31, 0),
     part(new THREE.SphereGeometry(0.08, 6, 4), glassMat, 0.29, 0.03, 0),
     part(new THREE.SphereGeometry(0.035, 5, 3), glassMat, 0.08, 0.04, 0.155), // koøyer
     part(new THREE.SphereGeometry(0.035, 5, 3), glassMat, 0.08, 0.04, -0.155),
-    part(new THREE.BoxGeometry(wreck ? 0.2 : 0.42, 0.03, 0.2), darkMat, wreck ? 0.1 : -0.02, -0.15, 0), // kjøl
+    part(new THREE.BoxGeometry(0.42, 0.03, 0.2), darkMat, -0.02, -0.15, 0), // kjøl
   );
   group.scale.setScalar(1.7);
   group.userData.propeller = propeller;

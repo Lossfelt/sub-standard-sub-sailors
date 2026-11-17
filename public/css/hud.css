@@ -239,6 +239,10 @@
   .hull.damaged { animation: none; }
 }
 
+/* Bekreftelse i spillets egen stil, i stedet for nettleserens dialog. */
+dialog.confirm { width: min(360px, calc(100% - 24px)); text-align: center; border-color: var(--accent); }
+dialog.confirm h2 { margin-top: 0; }
+
 /* Små pikselikoner foran teksten på handlingsknappene. */
 .act .ico { width: 14px; height: 14px; margin-right: 5px; vertical-align: -2px; }
 .ico path { fill: none; stroke: currentColor; stroke-width: 1; shape-rendering: crispEdges; }

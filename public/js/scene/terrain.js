@@ -132,7 +132,7 @@ export function buildTerrain(stage, board, seed) {
   );
 
   const update = (time) => {
-    caustics.update(time);
+    caustics.update(time, stage.cellPixels);
     decor.sway(time);
   };
 

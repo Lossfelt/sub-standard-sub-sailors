@@ -128,7 +128,15 @@ export class World {
 
   // En truffet ubåt krenger og synker til bunns, og blir liggende som vrak.
   async sink(id, x, y) {
-    const model = id === this.you ? this.sub : this.others.get(id);
+    let model = id === this.you ? this.sub : this.others.get(id);
+    // Levende spillere ser ikke de andre ubåtene, men en som senkes skal likevel ses synke.
+    let shown = null;
+    if (!model && id !== this.you) {
+      shown = model = makeSub(this.players.get(id).color);
+      model.position.copy(this.at(x, y, SUB_HEIGHT));
+      model.rotation.y = Math.random() * Math.PI * 2;
+      this.stage.scene.add(model);
+    }
     if (model?.visible) {
       model.userData.sinking = true;
       const from = model.position.clone();
@@ -142,7 +150,8 @@ export class World {
       });
     }
     this.addWreck(id, x, y, model?.rotation.y);
-    if (model) {
+    if (shown) disposeObject(shown);
+    else if (model) {
       model.userData.sinking = false;
       model.rotation.x = 0;
       model.rotation.z = 0;

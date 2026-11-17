@@ -13,8 +13,9 @@ const VERTEX = /* glsl */ `
 
 const FRAGMENT = /* glsl */ `
   uniform float uTime;
+  uniform float uTexels; // lyspiksler per rute
+  uniform float uStrength;
   varying vec2 vCell;
-  const float TEXELS = 8.0; // lyspiksler per rute
 
   // Kjent, billig kaustikkmønster: noen runder med sammenflettede sinusbølger.
   float caustic(vec2 p, float t) {
@@ -31,15 +32,15 @@ const FRAGMENT = /* glsl */ `
   }
 
   void main() {
-    vec2 cell = floor(vCell * TEXELS) / TEXELS;
+    vec2 cell = floor(vCell * uTexels) / uTexels;
     float light = caustic(cell * 1.9 - 250.0, uTime * 0.35 + 23.0);
-    gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * 0.42, 1.0);
+    gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * uStrength, 1.0);
   }
 `;
 
 export function makeCaustics(size) {
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uSize: { value: size } },
+    uniforms: { uTime: { value: 0 }, uSize: { value: size }, uTexels: { value: 8 }, uStrength: { value: 0.42 } },
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
     transparent: true,
@@ -49,5 +50,12 @@ export function makeCaustics(size) {
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2), material);
   mesh.position.y = 0.005;
   mesh.renderOrder = -1; // under alle markører
-  return { mesh, update: (time) => { material.uniforms.uTime.value = time; } };
+  // Er rutene små på skjermen, blir lysmønsteret grovere og svakere, ellers ser det ut som støy.
+  const update = (time, cellPixels = 32) => {
+    const { uTime, uTexels, uStrength } = material.uniforms;
+    uTime.value = time;
+    uTexels.value = cellPixels >= 24 ? 8 : cellPixels >= 14 ? 4 : 2;
+    uStrength.value = cellPixels >= 14 ? 0.42 : 0.24;
+  };
+  return { mesh, update };
 }
