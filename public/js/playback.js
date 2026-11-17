@@ -26,7 +26,32 @@ async function playMovement(game, report) {
   }
 }
 
-async function playExplosions(game, report) {
+function ownHit(game, report) {
+  const { world, hud } = game;
+  world.stage.shake = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.9;
+  play('hull_hit', 0.9);
+  const messages = {
+    direct: 'Direkte treff. Vann overalt. Det var det.',
+    indirect: 'Vi er truffet! Skroget lekker. Reparer to ganger innen tre runder, ellers synker vi.',
+    collision: `KRASJ! Vi kolliderte med en annen ubåt i ${cellName(report.collision?.x, report.collision?.y)}. Skroget lekker, reparer to ganger innen tre runder.`,
+  };
+  hud.log(messages[report.hit], 'bad');
+  if (report.collision) game.contacts.push({ x: report.collision.x, y: report.collision.y, round: report.round });
+}
+
+async function playSinking(game, s) {
+  play('sinking', 0.8);
+  const sinking = game.world.sink(s.id, s.x, s.y);
+  const mine = s.id === game.you;
+  game.hud.log(mine
+    ? `Vi ${SUNK_CAUSE[s.cause]}. Takk for innsatsen, mannskap.`
+    : `${game.playerName(s.id)} ${SUNK_CAUSE[s.cause]} ved ${cellName(s.x, s.y)}.`, mine ? 'bad' : 'good');
+  await sinking;
+}
+
+// Hver eksplosjon spilles av for seg, med treffet og en eventuell synking rett etter, slik at
+// rekkefølgen på skjermen og i loggen er den samme som i runden.
+async function playExplosions(game, report, sunkLeft) {
   const { world, hud } = game;
   if (report.launchesHeard) {
     play('launch_far', 0.5);
@@ -34,6 +59,7 @@ async function playExplosions(game, report) {
       ? 'Sonar: noen har skutt ut en torpedo.'
       : `Sonar: ${report.launchesHeard} torpedoer er skutt ut.`, 'sonar');
   }
+  let hitShown = false;
   for (const e of report.explosions) {
     play('explosion', e.onMe ? 1 : 0.7);
     game.booms.push({ x: e.x, y: e.y, round: report.round });
@@ -44,31 +70,19 @@ async function playExplosions(game, report) {
       hud.log(e.mine ? `TREFF! Torpedoen vår traff en ubåt ved ${where}.` : `En ubåt ble truffet ved ${where}.`, e.mine ? 'good' : 'sonar');
     }
     await world.effects.explosion(e.x, e.y);
+    if (e.kind !== 'hit') continue;
+    if (e.onMe && report.hit && report.hit !== 'collision') {
+      ownHit(game, report);
+      hitShown = true;
+    }
+    const victim = sunkLeft.findIndex((s) => s.x === e.x && s.y === e.y && (s.cause === 'direct' || s.cause === 'second'));
+    if (victim >= 0) await playSinking(game, sunkLeft.splice(victim, 1)[0]);
   }
-  if (report.hit) {
-    world.stage.shake = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.9;
-    play('hull_hit', 0.9);
-    const messages = {
-      direct: 'Direkte treff. Vann overalt. Det var det.',
-      indirect: 'Vi er truffet! Skroget lekker. Reparer to ganger innen tre runder, ellers synker vi.',
-      collision: `KRASJ! Vi kolliderte med en annen ubåt i ${cellName(report.collision?.x, report.collision?.y)}. Skroget lekker, reparer to ganger innen tre runder.`,
-    };
-    hud.log(messages[report.hit], 'bad');
-    if (report.collision) game.contacts.push({ x: report.collision.x, y: report.collision.y, round: report.round });
-  }
+  if (report.hit && !hitShown) ownHit(game, report);
 }
 
-async function playSinkings(game, report) {
-  const { world, hud } = game;
-  for (const s of report.sunk) {
-    play('sinking', 0.8);
-    const sinking = world.sink(s.id, s.x, s.y);
-    const mine = s.id === game.you;
-    hud.log(mine
-      ? `Vi ${SUNK_CAUSE[s.cause]}. Takk for innsatsen, mannskap.`
-      : `${game.playerName(s.id)} ${SUNK_CAUSE[s.cause]} ved ${cellName(s.x, s.y)}.`, mine ? 'bad' : 'good');
-    await sinking;
-  }
+async function playSinkings(game, report, sunkLeft) {
+  for (const s of sunkLeft) await playSinking(game, s);
   if (report.repair?.done) {
     play('repair', 0.7);
     hud.log('Skroget er tett igjen. Godt jobbet.', 'good');
@@ -143,8 +157,9 @@ export async function playRound(game, msg) {
   game.world.showGhost(game.view.me, null);
   game.world.markers.clearSelection();
   await playMovement(game, report);
-  await playExplosions(game, report);
-  await playSinkings(game, report);
+  const sunkLeft = [...report.sunk]; // senkninger som ikke er spilt av ennå
+  await playExplosions(game, report, sunkLeft);
+  await playSinkings(game, report, sunkLeft);
   if (wasAlive && view.me.alive) await playSonar(game, report);
   game.view = view;
   game.applyView();
