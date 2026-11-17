@@ -69,7 +69,7 @@ const FRAGMENT = /* glsl */ `
   void main() {
     float light;
     if (uMode > 0.5) {
-      light = voronoiCaustic() * 0.45;
+      light = voronoiCaustic() * 0.15;
     } else {
       vec2 cell = floor(vCell * uTexels) / uTexels;
       // Ett mønster alene gjentar seg med få ruters mellomrom. To mønstre i ulik skala, det ene
