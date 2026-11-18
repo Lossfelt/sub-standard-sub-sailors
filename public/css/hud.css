@@ -249,6 +249,7 @@
   .top-right { max-width: 40vw; }
   .top-right .tag { display: none; }
   .icon-btn { width: 30px; height: 30px; }
+  .tools { flex-wrap: wrap; }
   .dpad { grid-template-columns: repeat(3, 38px); }
 }
 

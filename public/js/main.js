@@ -9,6 +9,8 @@ import { RULES_HTML } from './texts.js';
 const $ = (id) => document.getElementById(id);
 // Brettet står på skrå, så piltastene følger skjermdiagonalene.
 const ARROW_SLOTS = { ArrowUp: 'NE', ArrowRight: 'SE', ArrowDown: 'SW', ArrowLeft: 'NW' };
+// Står brettet rett, følger piltastene skjermens akser.
+const ARROW_STRAIGHT = { ArrowUp: 'N', ArrowRight: 'E', ArrowDown: 'S', ArrowLeft: 'W' };
 // W, A, S, D flytter utsnittet (piksler per tastetrykk), + og - zoomer.
 const PAN_KEYS = { w: [0, 60], s: [0, -60], a: [60, 0], d: [-60, 0] };
 const ZOOM_KEYS = { '+': 1.3, '=': 1.3, '-': 1 / 1.3 };
@@ -55,7 +57,19 @@ function openRules() {
 }
 
 $('help').addEventListener('click', openRules);
-$('find').addEventListener('click', () => game.findMe());$('menu-help').addEventListener('click', openRules);
+$('find').addEventListener('click', () => game.findMe());
+
+// Midlertidig: sammenligne skrå og rett visning av brettet.
+function showViewButton() {
+  $('view').innerHTML = stage.angled ? '&#9671;' : '&#9633;'; // ◇ skrå, □ rett
+}
+function toggleView() {
+  stage.setAngled(!stage.angled);
+  showViewButton();
+  game.rotate(0); // oppdaterer styreknappene, som følger skjermretningen
+}
+showViewButton();
+$('view').addEventListener('click', toggleView);$('menu-help').addEventListener('click', openRules);
 $('leave-lobby').addEventListener('click', leaveRoom);
 $('leave').addEventListener('close', () => {
   if ($('leave').returnValue === 'leave') leaveRoom();
@@ -69,12 +83,13 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'q' || e.key === 'Q') game.rotate(-1);
   else if (e.key === 'e' || e.key === 'E') game.rotate(1);
   else if (e.key === 'f' || e.key === 'F') game.findMe();
+  else if (e.key === 'v' || e.key === 'V') toggleView();
   else if (PAN_KEYS[e.key.toLowerCase()]) stage.panBy(...PAN_KEYS[e.key.toLowerCase()]);
   else if (ZOOM_KEYS[e.key]) stage.zoomBy(ZOOM_KEYS[e.key]);
   else if (e.key === 'Enter' && !target.matches('button')) game.send();
   else if (ARROW_SLOTS[e.key]) {
     e.preventDefault();
-    game.moveCursor(ARROW_SLOTS[e.key]);
+    game.moveCursor((stage.angled ? ARROW_SLOTS : ARROW_STRAIGHT)[e.key]);
   } else if (e.key === ' ' && !target.matches('button')) {
     e.preventDefault();
     game.selectCursor();

@@ -4,8 +4,19 @@ import * as THREE from 'three';
 import { PostProcess } from './post.js';
 
 const PITCH = Math.PI / 6; // 30 grader gir klassisk 2:1 "isometrisk" pikselgrafikk
+// Rett brett ses brattere ovenfra, slik at det fyller mer av en høy mobilskjerm.
+const PITCH_STRAIGHT = (50 * Math.PI) / 180;
 const CAMERA_DISTANCE = 60;
 const GROUND = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const ANGLE_KEY = 'ssss-view';
+
+function readAngled() {
+  try {
+    return localStorage.getItem(ANGLE_KEY) !== 'rett';
+  } catch {
+    return true;
+  }
+}
 
 export class Stage {
   constructor(canvas, labelRoot) {
@@ -20,7 +31,10 @@ export class Stage {
     this.raycaster = new THREE.Raycaster();
     this.boardSize = 10;
     this.quarter = 0;
-    this.yaw = Math.PI / 4;
+    // Skrå (isometrisk, ruter på spiss) eller rett (kantene parallelle med skjermen). Rett
+    // utnytter en smal mobilskjerm bedre, siden brettet ikke står på høykant.
+    this.angled = readAngled();
+    this.yaw = this.targetYaw;
     this.zoom = 1;
     this.pan = new THREE.Vector2();
     this.bottomInset = 0; // CSS-piksler nederst som dekkes av ordrepanelet
@@ -52,7 +66,14 @@ export class Stage {
   }
 
   get targetYaw() {
-    return Math.PI / 4 + this.quarter * (Math.PI / 2);
+    return (this.angled ? Math.PI / 4 : 0) + this.quarter * (Math.PI / 2);
+  }
+
+  setAngled(angled) {
+    this.angled = angled;
+    try {
+      localStorage.setItem(ANGLE_KEY, angled ? 'skrå' : 'rett');
+    } catch { /* valget huskes bare ikke til neste gang */ }
   }
 
   rotate(step) {
@@ -87,7 +108,11 @@ export class Stage {
     const n = this.boardSize;
     const usable = Math.max(0.45, 1 - this.bottomInset / h);
     // Halv bredde/høyde brettet trenger: diagonalen vannrett, og den sammentrykte diagonalen loddrett.
-    const halfH = Math.max((n * 0.3536 + 1.7) / usable, (n * 0.7071 + 0.9) / aspect);
+    // Skrått: diagonalen vannrett og den sammentrykte diagonalen loddrett. Rett: siden vannrett,
+    // og siden sammentrykt av kameravinkelen loddrett.
+    const halfH = this.angled
+      ? Math.max((n * 0.3536 + 1.7) / usable, (n * 0.7071 + 0.9) / aspect)
+      : Math.max((n * 0.5 * Math.sin(PITCH_STRAIGHT) + 1.9) / usable, (n * 0.5 + 1.4) / aspect);
     const cam = this.camera;
     cam.left = -halfH * aspect;
     cam.right = halfH * aspect;
@@ -99,8 +124,9 @@ export class Stage {
     this.cellPixels = (this.renderer.domElement.height * this.zoom) / (2 * halfH);
     // 0 helt utzoomet på liten skjerm, 1 når rutene er store nok til å vise alle detaljer.
     this.detail = THREE.MathUtils.clamp((this.cellPixels - 12) / 14, 0, 1);
-    const c = Math.cos(PITCH);
-    cam.position.set(c * Math.sin(this.yaw), Math.sin(PITCH), c * Math.cos(this.yaw))
+    const pitch = this.angled ? PITCH : PITCH_STRAIGHT;
+    const c = Math.cos(pitch);
+    cam.position.set(c * Math.sin(this.yaw), Math.sin(pitch), c * Math.cos(this.yaw))
       .multiplyScalar(CAMERA_DISTANCE);
     cam.lookAt(0, 0, 0);
     cam.updateMatrixWorld();
