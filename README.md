@@ -86,3 +86,26 @@ Merk:
 - Gratisnivået sover etter en stund uten trafikk, og første besøk tar da lenger tid. Bytt `plan`
   i `render.yaml` til en betalt plan for å unngå det. Sjekk Renders gjeldende vilkår.
 - Ved ny deploy eller omstart forsvinner pågående spill.
+
+### Spillogg
+
+Når `DATABASE_URL` er satt (Postgres, for eksempel Neon), lagres hvert spill når det er ferdig
+eller avbrutt etter minst én runde. Tabellene lages automatisk. Uten variabelen lagres ingenting.
+Kallenavn lagres ikke, bare spiller-ID og om det var en bot.
+
+- `games`: ett spill per rad, med frø, rundeklokke, antall runder, antall mennesker, vinner,
+  commit (`version`) og hele rundeloggen i `data` (hver ubåts ordre, posisjon, støy, hvem som
+  hørte hvem, treff og senkninger).
+- `game_players`: én rad per spiller per spill, med plassering og sammendrag i `stats`
+  (torpedoer, fokuserte sonarer, reparasjoner, drap, runder hørt, første runde hørt, runder i
+  grop, snittfart, snittstøy og betenkningstid).
+
+Eksempel: hvor mange torpedoer vinnerne skyter sammenlignet med de andre, i spill med mennesker.
+
+```sql
+SELECT place = 1 AS vant, avg((stats->>'fired')::int) AS torpedoer,
+       avg((stats->>'roundsHeard')::float / (stats->>'rounds')::int) AS andel_hort
+FROM game_players JOIN games ON games.id = game_id
+WHERE finished AND humans > 0 AND NOT bot
+GROUP BY vant;
+```

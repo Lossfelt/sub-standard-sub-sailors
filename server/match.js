@@ -5,6 +5,8 @@ import { createState, resolveRound } from '../shared/resolve.js';
 import { makeRng, randomSeed } from '../shared/rng.js';
 import { Bot } from './bot.js';
 import { buildView, buildReport } from './views.js';
+import { GameRecorder } from './gamelog.js';
+import { saveGame } from './db.js';
 
 const SPECTATE_DELAY = 1500; // ms mellom rundene når bare bots er igjen
 const ACTIONS = new Set(['listen', 'focus', 'fire', 'repair']);
@@ -40,6 +42,9 @@ export class Match {
     this.repairs = Object.fromEntries(ids.map((id) => [id, 0])); // utførte reparasjoner per ubåt
     this.timer = null;
     this.deadline = null;
+    this.log = new GameRecorder(this);
+    this.roundStart = Date.now();
+    this.thinkMs = {}; // hvor lenge hvert menneske brukte på ordren denne runden
   }
 
   isAlive(id) {
@@ -113,6 +118,7 @@ export class Match {
   submit(id, raw) {
     if (this.over || !this.isAlive(id) || this.orders[id]) return;
     this.orders[id] = sanitizeOrder(raw);
+    this.thinkMs[id] = Date.now() - this.roundStart;
     this.room.broadcast({ t: 'submitted', ids: Object.keys(this.orders) });
     if (!this.waiting().length) this.resolve();
   }
@@ -125,7 +131,10 @@ export class Match {
       if (aliveBefore.has(id)) this.orders[id] = bot.decide(buildView(this, id));
     }
     const ev = resolveRound(this.state, this.orders, this.rng);
+    this.log.round(this.state, ev, this.orders, this.thinkMs);
     this.orders = {};
+    this.thinkMs = {};
+    this.roundStart = Date.now();
     this.over = ev.over;
     this.winner = ev.winner;
     this.wrecks.push(...ev.sunk.map(({ id, x, y }) => ({ id, x, y })));
@@ -145,11 +154,22 @@ export class Match {
         over: this.overInfo(),
       });
     }
-    if (this.over) this.room.matchEnded();
+    if (this.over) {
+      this.save(true);
+      this.room.matchEnded();
+    }
+  }
+
+  // Lagrer spillet én gang: når noen vinner, eller når det avbrytes etter minst én runde.
+  save(finished) {
+    if (this.log.saved || !this.log.rounds.length) return;
+    this.log.saved = true;
+    saveGame(this.log.record(finished, this.winner));
   }
 
   stop() {
     this.clearTimer();
+    this.save(false);
     this.over = true;
   }
 }

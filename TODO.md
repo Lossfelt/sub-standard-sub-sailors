@@ -9,6 +9,7 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 
 ## Gjort nylig
 
+- Spillogg i Postgres (Neon): alle trekk per runde og et sammendrag per spiller, til analyse av balansen
 - Håndtegnede, detaljerte pikselteksturer, søyleruiner, vrak av senkede ubåter, boblespor
 - Voronoi-lysspill på bunnen, og renere bilde helt utzoomet (forenklede teksturer, mindre dithering, færre partikler og mindre vulkanrøyk)
 - Torpedoer peker i fartsretningen, andres torpedoer høres som spredte røde ringer
