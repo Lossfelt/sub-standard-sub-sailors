@@ -3,7 +3,7 @@
 import { CONFIG, DIRS } from '/shared/config.js';
 import { makeBoard } from '/shared/board.js';
 import {
-  accelerate, moveSub, canTarget, areaCells, dist, linePath, inBounds, key, inBaffles, noiseOf, pitDamping,
+  accelerate, moveSub, canTarget, areaCells, dist, linePath, inBounds, key, inBaffles, noiseOf, inPit,
 } from '/shared/grid.js';
 import { attachInput } from './scene/input.js';
 import { World } from './world.js';
@@ -30,7 +30,7 @@ export class Game {
     this.stop();
     this.you = msg.you;
     this.players = msg.players;
-    this.board = makeBoard(msg.board.size, msg.board.rocks, msg.board.pits ?? []);
+    this.board = makeBoard(msg.board.size, msg.board.rocks, msg.board.trenches ?? []);
     this.world = new World(this.stage, this.board, msg.seed, msg.players, msg.you);
     this.view = msg.view;
     this.submitted = msg.submitted;
@@ -46,8 +46,8 @@ export class Game {
     if (!this.loadMemory()) {
       this.hud.clearLog();
       this.hud.log(`Brettet er ${this.board.size} × ${this.board.size} ruter. Dra i brettet for å flytte utsnittet, rull for å zoome.`);
-      const pits = this.board.pitList.length;
-      if (pits) this.hud.log(`Brettet har ${pits === 1 ? 'én grop' : 'to groper'}. I en grop høres du dårligere, men du hører også dårligere selv.`);
+      const pits = this.board.trenches.length;
+      if (pits) this.hud.log(`Brettet har ${pits === 1 ? 'en lang grop' : 'to lange groper'}. I en grop høres du dårligere, men du hører også dårligere selv. Langs samme grop går lyden fritt.`);
       this.hud.log('God jakt, kaptein.');
     }
     this.applyView();
@@ -166,7 +166,7 @@ export class Game {
     hud.setAction(order.action.type, !!me.damage);
     // Motoren hoster når den har gått på tomgang en stund, og en grop demper det som høres.
     const coughing = v.vx === 0 && v.vy === 0 && me.idle > 0;
-    const damping = pitDamping(this.board, moved.x, moved.y);
+    const damping = inPit(this.board, moved.x, moved.y) ? CONFIG.pits.damping : 0;
     const noise = Math.max(0, noiseOf(v.vx, v.vy, order.action.type, me.idle) - damping);
     hud.setReadout(describeSpeed(v.vx, v.vy) + (moved.bumped ? ' (krasj!)' : ''), noise, coughing, damping > 0);
     world.showGhost(me, this.sent ? null : moved);

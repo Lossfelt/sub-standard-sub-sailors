@@ -33,10 +33,14 @@ export const CONFIG = {
     repair: 20,
   },
 
-  // Groper i bunnen: sjeldne, og lyd inn og ut av en grop dempes så mange prosentpoeng.
+  // Lange groper i bunnen: sjeldne, og lyd inn og ut av en grop dempes så mange prosentpoeng.
   pits: {
     countChances: [0.55, 0.3, 0.15], // sjansen for 0, 1 og 2 groper på et brett
     damping: 30,
+    minLength: 6,
+    crossChance: 0.4, // andel groper som går fra kant til kant
+    bendChance: 0.25, // sjansen per rute for å skyve seg en rute til siden
+    turnChance: 0.07, // sjansen per rute for å svinge
   },
 
   sonar: {

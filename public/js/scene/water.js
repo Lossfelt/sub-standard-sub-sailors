@@ -20,7 +20,8 @@ const FRAGMENT = /* glsl */ `
   uniform float uTexels; // lyspiksler per rute er det dobbelte av denne
   uniform float uStrength;
   uniform sampler2D uWeb;
-  uniform vec2 uPits[2]; // midten av gropene i lyskoordinater, langt utenfor brettet hvis ingen
+  uniform float uSize;
+  uniform sampler2D uPits; // 1 i ruter med grop, slik at lyset ikke legger seg flatt over dem
   varying vec2 vCell;
 
   // Nettet slås opp med myk utjevning, så det glir jevnt i stedet for å hoppe ett piksel om gangen.
@@ -40,8 +41,7 @@ const FRAGMENT = /* glsl */ `
     // Fire lystrinn gir duse overganger, men holder flatene rene.
     float light = floor(web(a) * web(b) * 4.0 + 0.3) / 4.0;
     // Lyset når ikke ned i gropene, og dette laget ligger flatt over dem.
-    float pit = min(distance(vCell, uPits[0]), distance(vCell, uPits[1]));
-    light *= smoothstep(0.2, 0.5, pit);
+    light *= 1.0 - 0.9 * texture2D(uPits, vCell / uSize).r;
     gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * light * 0.3 * uStrength, 1.0);
   }
 `;
@@ -73,11 +73,18 @@ function webTexture() {
   return texture;
 }
 
+// Maske med én piksel per rute. Lagets v går motsatt vei av radene på brettet.
+function pitMask(size, pitList) {
+  const data = new Uint8Array(size * size * 4);
+  for (const [x, y] of pitList) data.set([255, 255, 255, 255], ((size - 1 - y) * size + x) * 4);
+  const texture = new THREE.DataTexture(data, size, size);
+  texture.magFilter = texture.minFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 export function makeCaustics(size, pitList = []) {
-  // Lagets v går motsatt vei av radene på brettet.
-  const pits = [0, 1].map((i) => (pitList[i]
-    ? new THREE.Vector2(pitList[i][0] + 0.5, size - pitList[i][1] - 0.5)
-    : new THREE.Vector2(-99, -99)));
+  const pits = pitMask(size, pitList);
   const web = webTexture();
   const material = new THREE.ShaderMaterial({
     uniforms: {
@@ -90,6 +97,7 @@ export function makeCaustics(size, pitList = []) {
     depthWrite: false,
   });
   material.map = web; // ryddes bort sammen med brettet
+  material.alphaMap = pits;
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2), material);
   mesh.position.y = 0.005;
   mesh.renderOrder = -1; // under alle markører

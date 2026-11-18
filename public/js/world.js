@@ -6,7 +6,7 @@ import { Effects } from './scene/effects.js';
 import { Life } from './scene/life.js';
 import { makeSub, makeTorpedo, setHeading, addHeadlight, disposeObject } from './scene/models.js';
 import { COMPASS, cellName } from './texts.js';
-import { pitDip } from './scene/pits.js';
+import { trenchShape } from './scene/pits.js';
 
 const SUB_HEIGHT = 0.45;
 const TORPEDO_HEIGHT = 0.3;
@@ -21,6 +21,7 @@ export class World {
     this.you = you;
     stage.setBoardSize(board.size);
     this.terrain = buildTerrain(stage, board, seed);
+    this.trench = trenchShape(stage, board.trenches);
     stage.scene.add(this.terrain.group);
     this.markers = new Markers(stage);
     this.effects = new Effects(stage);
@@ -281,12 +282,7 @@ export class World {
 
   // Ubåter senker seg ned i en grop når de ligger i eller glir gjennom den.
   pitDipAt(pos) {
-    let dip = 0;
-    for (const [x, y] of this.board.pitList) {
-      const c = this.stage.cellToWorld(x, y);
-      dip = Math.max(dip, pitDip(Math.hypot(pos.x - c.x, pos.z - c.z)));
-    }
-    return dip * 0.8;
+    return this.trench.segments.length ? this.trench.dipAt(pos.x, pos.z) * 0.8 : 0;
   }
 
   frame(dt, time) {

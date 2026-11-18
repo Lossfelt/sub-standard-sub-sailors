@@ -124,8 +124,9 @@ export class Bot {
       const nearTarget = t.mine && dist(moved.x, moved.y, t.tx, t.ty) <= 1;
       if (dist(moved.x, moved.y, t.x, t.y) <= 1 || nearTarget) score -= 40;
     }
-    // En grop er et godt sted å puste ut, men motoren hoster om boten blir liggende.
-    if (!fleeing && this.board.pits.has(key(moved.x, moved.y))) score += 4 - (view.me.idle ?? 0);
+    // En grop er et godt sted å puste ut en runde eller to, men ikke å bli liggende.
+    const idle = view.me.idle ?? 0;
+    if (!fleeing && speed === 0 && idle < 2 && this.board.pits.has(key(moved.x, moved.y))) score += 3;
     if (fleeing) score += 3 * dist(moved.x, moved.y, this.danger.x, this.danger.y);
     else if (this.waypoint) score -= dist(moved.x, moved.y, this.waypoint.x, this.waypoint.y);
     return score;

@@ -34,10 +34,11 @@ const FRAGMENT = /* glsl */ `
     // Lag som legger lys til (kaustikk) kan gi dekning over 1, derfor klemmes den.
     vec3 color = scene.rgb + background * (1.0 - clamp(scene.a, 0.0, 1.0));
 
-    // Skrå lysstråler som sakte vandrer, sterkest øverst.
+    // Skrå lysstråler som sakte vandrer, sterkest øverst. De ligger i skjermbildet og ikke i
+    // scenen, så de tegnes bare i bakgrunnen. Over brettet så de ut som en stripe som fulgte skjermen.
     float x = vUv.x + (1.0 - vUv.y) * 0.35;
     float rays = (0.5 + 0.5 * sin(x * 21.0 + uTime * 0.22)) * (0.5 + 0.5 * sin(x * 8.0 - uTime * 0.15 + 1.3));
-    rays = pow(rays, 3.0) * smoothstep(0.1, 1.0, vUv.y);
+    rays = pow(rays, 3.0) * smoothstep(0.1, 1.0, vUv.y) * (1.0 - clamp(scene.a, 0.0, 1.0));
     color += vec3(0.07, 0.17, 0.22) * rays * 0.5;
 
     float vignette = smoothstep(0.95, 0.3, distance(vUv, vec2(0.5)));

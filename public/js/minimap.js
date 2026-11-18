@@ -48,11 +48,14 @@ export class Minimap {
       const [x, y] = k.split(',').map(Number);
       dot(x, y, '#5d6f80', CELL);
     }
-    for (const [x, y] of board.pitList) {
-      ctx.fillStyle = '#05121a';
+    // Gropene som tykke, mørke streker gjennom midten av rutene.
+    ctx.strokeStyle = '#05121a';
+    ctx.lineWidth = CELL * 0.8;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    for (const cells of board.trenches) {
       ctx.beginPath();
-      ctx.arc((x + 0.5) * CELL, (y + 0.5) * CELL, CELL * 0.42, 0, Math.PI * 2);
-      ctx.fill();
+      cells.forEach(([x, y], i) => ctx[i ? 'lineTo' : 'moveTo']((x + 0.5) * CELL, (y + 0.5) * CELL));
+      ctx.stroke();
     }
     for (const b of game.booms) dot(b.x, b.y, '#ffffff', 4);
     for (const c of game.contacts) dot(c.x, c.y, view.round - c.round === 0 ? '#ffb347' : '#a0702e', 6);

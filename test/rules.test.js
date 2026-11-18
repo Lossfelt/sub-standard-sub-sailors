@@ -182,14 +182,18 @@ test('baffles: i fart hører man ikke det som ligger rett bak', () => {
 test('groper demper lyd begge veier', () => {
   const fire = { b: { action: { type: 'fire', x: 5, y: 9 } } };
   // b skyter fra en grop: 50 - 5 - 30 = 15 %.
-  const hidden = createState(makeBoard(12, [], [[5, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  const hidden = createState(makeBoard(12, [], [[[5, 1]]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
   assert.deepEqual(resolveRound(hidden, fire, fixedRng([0.14])).contacts.a, [{ x: 5, y: 1 }]);
   assert.deepEqual(resolveRound(hidden, fire, fixedRng([0.16])).contacts.a, []);
   // a lytter fra en grop: like dårlig.
-  const deaf = createState(makeBoard(12, [], [[0, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  const deaf = createState(makeBoard(12, [], [[[0, 1]]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
   assert.deepEqual(resolveRound(deaf, fire, fixedRng([0.16])).contacts.a, []);
+  // I samme grop går lyden fritt: 50 - 5 = 45 %.
+  const row = [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1]];
+  const along = createState(makeBoard(12, [], [row]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  assert.deepEqual(resolveRound(along, fire, fixedRng([0.44])).contacts.a, [{ x: 5, y: 1 }]);
   // Fokusert sonar finner den som ligger i gropa som vanlig.
-  const focus = createState(makeBoard(12, [], [[5, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  const focus = createState(makeBoard(12, [], [[[5, 1]]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
   const ev = resolveRound(focus, { a: { action: { type: 'focus', x: 5, y: 1 } } }, fixedRng());
   assert.equal(ev.focus.a.found, true);
 });
@@ -202,9 +206,13 @@ test('genererte brett er sammenhengende og har plass til alle', () => {
     const spawns = pickSpawns(board, 4, rng);
     assert.equal(spawns.length, 4);
     for (const s of spawns) assert.equal(board.rocks.has(`${s.x},${s.y}`) || board.pits.has(`${s.x},${s.y}`), false);
-    assert.ok(board.pitList.length <= 2);
-    for (const [x, y] of board.pitList) {
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) assert.equal(board.rocks.has(`${x + dx},${y + dy}`), false);
+    assert.ok(board.trenches.length <= 2);
+    for (const cells of board.trenches) {
+      assert.ok(cells.length >= 6);
+      cells.forEach(([x, y], i) => {
+        assert.equal(board.rocks.has(`${x},${y}`), false);
+        if (i) assert.equal(Math.abs(x - cells[i - 1][0]) + Math.abs(y - cells[i - 1][1]), 1, 'rutene henger sammen side mot side');
+      });
     }
   }
 });

@@ -22,7 +22,8 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - Valg mellom skrått og rett brett (knapp og tasten V). Rett brett ses brattere ovenfra, fyller bredden på mobil og har ingen fuger mellom flisene
 - Minikart når man har zoomet inn, med utsnitt, egen ubåt, kontakter og torpedoer. Trykk flytter utsnittet
 - Spillerlisten og minikartet kan skjules hver for seg, og runde og skrog står på én linje
-- Groper: noen brett har én eller to. Lyd inn og ut av en grop dempes 30 poeng begge veier
+- Lange, svingete groper (minst seks ruter, noen fra kant til kant) på noen brett. Lyd inn og ut av en grop dempes 30 poeng begge veier, men går fritt langs samme grop
+- Lysstrålene tegnes bare i bakgrunnen, ikke som en stripe over brettet
 - Tre nye biotoper: skipskirkegård, tareskog og varme kilder (seks i alt)
 - Gamle skipsvrak og buegangsruiner som varianter av fjellruter, og sjeldne kasser, tønner og krukker som pynt
 - Serveren tåler feil i én runde og ugyldige nettadresser uten at alle rom går ned

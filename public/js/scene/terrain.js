@@ -185,6 +185,7 @@ export function buildTerrain(stage, board, seed) {
       obj.geometry?.dispose();
       for (const m of [].concat(obj.material ?? [])) {
         m.map?.dispose();
+        m.alphaMap?.dispose();
         m.dispose();
       }
     });
