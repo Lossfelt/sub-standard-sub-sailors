@@ -8,6 +8,7 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - **Gjenstående visuelle forbedringer:**
   - Skipsvrak og større ruiner som pynt (søyleruiner finnes nå som en variant av fjellruter)
   - Flere biotoper, for eksempel skipskirkegård (korallrev, dyphavsslette og isdekke finnes)
+- Avgjøre om valget mellom skrått og rett brett skal bli permanent, og eventuelt flytte knappen til en innstillingsmeny
 
 ## Gjort nylig
 
@@ -21,6 +22,10 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - Sonarskygge rett bak egen ubåt når den er i fart (the baffles), både for lytting og fokusert sonar
 - Motoren tåler ikke tomgang: støyen øker for hver runde i strekk man står stille, så det lønner seg ikke å vente i et hjørne
 - Penere lobby med romkode-skilt, mannskapsliste med ubåtikoner og sonarskjerm
+- Valg mellom skrått og rett brett (knapp og tasten V). Rett brett ses brattere ovenfra, fyller bredden på mobil og har ingen fuger mellom flisene
+- Minikart når man har zoomet inn, med utsnitt, egen ubåt, kontakter og torpedoer. Trykk flytter utsnittet
+- Spillerlisten og minikartet kan skjules hver for seg, og runde og skrog står på én linje
+- Serveren tåler feil i én runde og ugyldige nettadresser uten at alle rom går ned
 
 ## Nye tanker fra Levin
 
