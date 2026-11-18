@@ -80,7 +80,10 @@ function tileKind(rng, theme, rock, mossiness, sandiness) {
 // Flisene deles på ett nett per teksturvariant.
 function buildTiles(stage, board, rng, theme) {
   const { size } = board;
+  // Skrått brett har synlige fuger mellom flisene. Rett ovenfra blir fugene til harde striper
+  // langs pikselkolonnene, så der ligger flisene kant i kant.
   const geometry = new THREE.BoxGeometry(0.94, 0.16, 0.94);
+  const gapless = new THREE.BoxGeometry(1, 0.16, 1);
   const kinds = {};
   const meshes = [];
   for (const [kind, maps] of Object.entries(tileTextures(rng))) {
@@ -113,7 +116,8 @@ function buildTiles(stage, board, rng, theme) {
       mesh.count += 1;
     }
   }
-  return meshes;
+  const setGaps = (gaps) => meshes.forEach((m) => { m.geometry = gaps ? geometry : gapless; });
+  return { meshes, setGaps, geometries: [geometry, gapless] };
 }
 
 export function buildTerrain(stage, board, seed) {
@@ -123,20 +127,27 @@ export function buildTerrain(stage, board, seed) {
   const theme = rng.pick(THEMES);
   const rocks = buildRocks(stage, board, rng, theme);
   const decor = buildDecor(stage, board, rng, theme.decor);
+  const tiles = buildTiles(stage, board, rng, theme);
   group.add(
     buildBase(board.size, rng),
-    ...buildTiles(stage, board, rng, theme),
+    ...tiles.meshes,
     caustics.mesh,
     ...rocks.meshes,
     ...decor.meshes,
   );
 
+  let gaps = null;
   const update = (time) => {
+    if (gaps !== stage.angled) {
+      gaps = stage.angled;
+      tiles.setGaps(gaps);
+    }
     caustics.update(time, stage.cellPixels);
     decor.sway(time);
   };
 
   const dispose = () => {
+    tiles.geometries.forEach((g) => g.dispose()); // den som ikke er i bruk, nås ikke av gjennomgangen
     group.traverse((obj) => {
       obj.geometry?.dispose();
       for (const m of [].concat(obj.material ?? [])) {

@@ -6,6 +6,7 @@ import { Game } from './game.js';
 import { Stage } from './scene/stage.js';
 import { initAudio, play, startAmbient, stopAmbient, toggleMute, isMuted } from './audio.js';
 import { RULES_HTML } from './texts.js';
+import { Minimap } from './minimap.js';
 const $ = (id) => document.getElementById(id);
 // Brettet står på skrå, så piltastene følger skjermdiagonalene.
 const ARROW_SLOTS = { ArrowUp: 'NE', ArrowRight: 'SE', ArrowDown: 'SW', ArrowLeft: 'NW' };
@@ -48,6 +49,8 @@ const hud = new Hud({
   },
 });
 game = new Game(stage, hud, net);
+const minimap = new Minimap($('minimap-wrap'), $('minimap'), stage, () => game);
+stage.onFrame(() => minimap.draw());
 // Feilsøkingskrok under lokal utvikling, så scenen kan inspiseres og drives fra konsollen.
 if (['localhost', '127.0.0.1'].includes(location.hostname)) window.ssss = { stage, game };
 

@@ -75,8 +75,7 @@
     <div id="labels" aria-hidden="true"></div>
 
     <header class="hud top-left panel">
-      <div class="round-line"><span id="round">Runde 1</span><span id="clock"></span></div>
-      <div id="hull" class="hull ok">Skrog: helt</div>
+      <div class="round-line"><span id="round">Runde 1</span><span id="clock"></span><span id="hull" class="hull ok">Skrog: helt</span></div>
       <div class="tools">
         <button id="rot-left" class="icon-btn" aria-label="Snu brettet mot venstre" title="Snu brettet (Q)">&#8634;</button>
         <button id="rot-right" class="icon-btn" aria-label="Snu brettet mot høyre" title="Snu brettet (E)">&#8635;</button>
@@ -93,6 +92,9 @@
 
     <aside class="hud top-right panel">
       <ul id="players" class="player-list compact"></ul>
+      <div id="minimap-wrap" class="minimap" title="Minikart: trykk for å flytte utsnittet" hidden>
+        <canvas id="minimap" aria-label="Minikart over hele brettet"></canvas>
+      </div>
     </aside>
 
     <section id="log-panel" class="hud log panel" aria-label="Loggbok">

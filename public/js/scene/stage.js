@@ -208,6 +208,22 @@ export class Stage {
     return inside ? { x, y } : null;
   }
 
+  // Hvor skjermens fire hjørner (over ordrepanelet) treffer bunnen, i rutekoordinater med
+  // desimaler. Brukes til å tegne utsnittet på minikartet.
+  viewCorners() {
+    const usable = Math.max(0.45, 1 - this.bottomInset / (this.canvas.clientHeight || 1));
+    const bottom = 1 - usable * 2;
+    const offset = (this.boardSize - 1) / 2;
+    const corners = [];
+    for (const [nx, ny] of [[-1, 1], [1, 1], [1, bottom], [-1, bottom]]) {
+      this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.camera);
+      const hit = this.raycaster.ray.intersectPlane(GROUND, new THREE.Vector3());
+      if (!hit) return null;
+      corners.push({ x: hit.x + offset, y: hit.z + offset });
+    }
+    return corners;
+  }
+
   // Hvilken av åtte skjermretninger (N = opp, NE, E = høyre ...) en rutenettretning peker i
   // med gjeldende brettvinkel. Rutenettets hovedretninger havner på skjermens diagonaler.
   screenSlot(dx, dy) {

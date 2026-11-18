@@ -83,12 +83,14 @@ export class Hud {
 
   setHull(me) {
     const { hull } = this.el;
+    hull.title = '';
     if (!me.alive) {
       hull.className = 'hull sunk';
-      hull.textContent = 'Senket. Du ser nå hele kartet.';
+      hull.textContent = 'Senket';
     } else if (me.damage) {
       hull.className = 'hull damaged';
-      hull.textContent = `SKADET: ${me.damage.repairs}/2 reparert, ${me.damage.left} runder igjen`;
+      hull.textContent = `SKADET ${me.damage.repairs}/2, ${me.damage.left} r. igjen`;
+      hull.title = `${me.damage.repairs} av 2 reparasjoner utført, ${me.damage.left} runder igjen`;
     } else {
       hull.className = 'hull ok';
       hull.textContent = 'Skrog: helt';

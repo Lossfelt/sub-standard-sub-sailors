@@ -35,7 +35,9 @@
 .hud { position: absolute; z-index: 2; }
 
 .top-left { top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; min-width: 170px; }
-.round-line { display: flex; justify-content: space-between; gap: 12px; }
+/* Runde og klokke til venstre, skrogstatus helt til høyre på samme linje. */
+.round-line { display: flex; align-items: baseline; gap: 10px; }
+.round-line .hull { margin-left: auto; white-space: nowrap; }
 #clock { color: var(--accent); }
 #clock.urgent { color: var(--danger); }
 .hull.ok { color: var(--ok); }
@@ -245,11 +247,12 @@
     max-height: 40vh;
   }
   .zoom-btn { display: none; } /* på berøringsskjerm zoomer man med to fingre */
-  .top-left { min-width: 0; max-width: 56vw; }
-  .top-right { max-width: 40vw; }
+  .top-left { min-width: 0; max-width: 64vw; }
+  .round-line { flex-wrap: wrap; row-gap: 0; }
+  .top-right { max-width: 34vw; }
   .top-right .tag { display: none; }
-  .icon-btn { width: 30px; height: 30px; }
-  .tools { flex-wrap: wrap; }
+  .icon-btn { width: 28px; height: 28px; }
+  .tools { flex-wrap: wrap; gap: 3px; }
   .dpad { grid-template-columns: repeat(3, 38px); }
 }
 
@@ -265,3 +268,26 @@ dialog.confirm h2 { margin-top: 0; }
 .act .ico { width: 14px; height: 14px; margin-right: 5px; vertical-align: -2px; }
 .ico path { fill: none; stroke: currentColor; stroke-width: 1; shape-rendering: crispEdges; }
 @media (max-width: 700px) { .act .ico { width: 11px; height: 11px; margin-right: 3px; } }
+
+/* Minikartet ligger under spillerlisten og dreies som brettet. */
+.minimap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 6px 0 0 auto;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+.minimap[hidden] { display: none; }
+.minimap canvas {
+  width: 120px;
+  height: 120px;
+  flex: none;
+  image-rendering: pixelated;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 0 0 2px var(--line);
+}
