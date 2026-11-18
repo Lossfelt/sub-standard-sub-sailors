@@ -5,14 +5,11 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 
 ## Skal gjøres
 
-- **Gjenstående visuelle forbedringer:**
-  - Skipsvrak og større ruiner som pynt (søyleruiner finnes nå som en variant av fjellruter)
-  - Flere biotoper, for eksempel skipskirkegård (korallrev, dyphavsslette og isdekke finnes)
 - Avgjøre om valget mellom skrått og rett brett skal bli permanent, og eventuelt flytte knappen til en innstillingsmeny
 
 ## Gjort nylig
 
-- Håndtegnede, detaljerte pikselteksturer, tre biotoper, søyleruiner, knekte og hele vrak, boblespor
+- Håndtegnede, detaljerte pikselteksturer, søyleruiner, vrak av senkede ubåter, boblespor
 - Voronoi-lysspill på bunnen, og renere bilde helt utzoomet (forenklede teksturer, mindre dithering, færre partikler og mindre vulkanrøyk)
 - Torpedoer peker i fartsretningen, andres torpedoer høres som spredte røde ringer
 - Tilskuere ser alle ubåter og torpedoer kjøre, og alle ser senkede ubåter synke rett etter treffet
@@ -25,6 +22,9 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - Valg mellom skrått og rett brett (knapp og tasten V). Rett brett ses brattere ovenfra, fyller bredden på mobil og har ingen fuger mellom flisene
 - Minikart når man har zoomet inn, med utsnitt, egen ubåt, kontakter og torpedoer. Trykk flytter utsnittet
 - Spillerlisten og minikartet kan skjules hver for seg, og runde og skrog står på én linje
+- Groper: noen brett har én eller to. Lyd inn og ut av en grop dempes 30 poeng begge veier
+- Tre nye biotoper: skipskirkegård, tareskog og varme kilder (seks i alt)
+- Gamle skipsvrak og buegangsruiner som varianter av fjellruter, og sjeldne kasser, tønner og krukker som pynt
 - Serveren tåler feil i én runde og ugyldige nettadresser uten at alle rom går ned
 
 ## Nye tanker fra Levin
@@ -36,7 +36,6 @@ forslag. Stjerne (★) betyr at jeg tror idéen gir mye moro for innsatsen.
 - **Decoys.** Ubåten slipper en lokkedue som begynner å lage ubåtlyd etter et valgt antall runder.
   Åpent: hvor mange man har, om den driver, og om en torpedo lar seg lure av den.
 - **Mer terreng:**
-  - Groper man kan gjemme seg i (lavere støy, men vanskelig å komme opp av?)
   - Strømninger som flytter ubåter og torpedoer en rute per runde
   - To dybdenivåer med en kant på tvers av kartet, der man ikke hører hverandre på tvers av nivåene
 - **Målsøkende torpedo.** Torpedoen oppdager ubåter flere ruter unna og svinger mot dem, i stedet

@@ -77,6 +77,12 @@ export function noiseOf(vx, vy, actionType, idleRounds = 0) {
   );
 }
 
+// Gropkantene skjermer for lyd begge veier: det som skjer i en grop høres dårligere, og den
+// som ligger i en grop hører dårligere selv.
+export function pitDamping(board, x, y) {
+  return board.pits?.has(key(x, y)) ? CONFIG.pits.damping : 0;
+}
+
 // Baffles: i fart overdøver ubåtens egen propell alt som ligger rett bak den. Gjelder en kjegle
 // på rundt 37 grader til hver side av retningen rett bakover, helt ut til brettkanten.
 export function inBaffles(vx, vy, dx, dy) {

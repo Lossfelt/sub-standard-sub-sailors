@@ -179,6 +179,21 @@ test('baffles: i fart hører man ikke det som ligger rett bak', () => {
   assert.ok(ev.focus.a.hidden.some(([x, y]) => x === 10 && y === 0));
 });
 
+test('groper demper lyd begge veier', () => {
+  const fire = { b: { action: { type: 'fire', x: 5, y: 9 } } };
+  // b skyter fra en grop: 50 - 5 - 30 = 15 %.
+  const hidden = createState(makeBoard(12, [], [[5, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  assert.deepEqual(resolveRound(hidden, fire, fixedRng([0.14])).contacts.a, [{ x: 5, y: 1 }]);
+  assert.deepEqual(resolveRound(hidden, fire, fixedRng([0.16])).contacts.a, []);
+  // a lytter fra en grop: like dårlig.
+  const deaf = createState(makeBoard(12, [], [[0, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  assert.deepEqual(resolveRound(deaf, fire, fixedRng([0.16])).contacts.a, []);
+  // Fokusert sonar finner den som ligger i gropa som vanlig.
+  const focus = createState(makeBoard(12, [], [[5, 1]]), [{ x: 0, y: 1 }, { x: 5, y: 1 }], ['a', 'b']);
+  const ev = resolveRound(focus, { a: { action: { type: 'focus', x: 5, y: 1 } } }, fixedRng());
+  assert.equal(ev.focus.a.found, true);
+});
+
 test('genererte brett er sammenhengende og har plass til alle', () => {
   for (let seed = 1; seed <= 20; seed++) {
     const rng = makeRng(seed);
@@ -186,7 +201,11 @@ test('genererte brett er sammenhengende og har plass til alle', () => {
     assert.equal(board.size, 14);
     const spawns = pickSpawns(board, 4, rng);
     assert.equal(spawns.length, 4);
-    for (const s of spawns) assert.equal(board.rocks.has(`${s.x},${s.y}`), false);
+    for (const s of spawns) assert.equal(board.rocks.has(`${s.x},${s.y}`) || board.pits.has(`${s.x},${s.y}`), false);
+    assert.ok(board.pitList.length <= 2);
+    for (const [x, y] of board.pitList) {
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) assert.equal(board.rocks.has(`${x + dx},${y + dy}`), false);
+    }
   }
 });
 

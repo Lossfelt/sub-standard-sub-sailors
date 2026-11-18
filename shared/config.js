@@ -33,6 +33,12 @@ export const CONFIG = {
     repair: 20,
   },
 
+  // Groper i bunnen: sjeldne, og lyd inn og ut av en grop dempes så mange prosentpoeng.
+  pits: {
+    countChances: [0.55, 0.3, 0.15], // sjansen for 0, 1 og 2 groper på et brett
+    damping: 30,
+  },
+
   sonar: {
     baffleCos: 0.8, // baffles: døv sone bak ubåten i fart, cos 0.8 er omtrent 37 grader til hver side
   },

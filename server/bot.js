@@ -54,7 +54,7 @@ export class Bot {
     const { me, round } = view;
     if (me.damage) return { type: 'repair' };
     const contact = this.freshestContact(view);
-    if (!contact) return { type: 'listen' };
+    if (!contact) return this.checkPit(me);
     const age = round - contact.round;
     const fireChance = [0.8, 0.5, 0.3, 0.15][age] ?? 0;
     const busy = view.torpedoes.filter((t) => t.mine).length >= 2;
@@ -62,6 +62,14 @@ export class Bot {
     if (!busy && aim && this.rng.chance(fireChance)) return { type: 'fire', ...aim };
     if (age >= 1 && this.rng.chance(0.5)) return { type: 'focus', x: contact.x, y: contact.y };
     return { type: 'listen' };
+  }
+
+  // Uten spor sjekker boten av og til om noen gjemmer seg i en grop.
+  checkPit(me) {
+    const pits = this.board.pitList.filter(([x, y]) => dist(me.x, me.y, x, y) > 1);
+    if (!pits.length || !this.rng.chance(0.15)) return { type: 'listen' };
+    const [x, y] = this.rng.pick(pits);
+    return { type: 'focus', x, y };
   }
 
   // Sikter foran målet ut fra anslått fart og hvor lang tid torpedoen bruker.
@@ -116,6 +124,8 @@ export class Bot {
       const nearTarget = t.mine && dist(moved.x, moved.y, t.tx, t.ty) <= 1;
       if (dist(moved.x, moved.y, t.x, t.y) <= 1 || nearTarget) score -= 40;
     }
+    // En grop er et godt sted å puste ut, men motoren hoster om boten blir liggende.
+    if (!fleeing && this.board.pits.has(key(moved.x, moved.y))) score += 4 - (view.me.idle ?? 0);
     if (fleeing) score += 3 * dist(moved.x, moved.y, this.danger.x, this.danger.y);
     else if (this.waypoint) score -= dist(moved.x, moved.y, this.waypoint.x, this.waypoint.y);
     return score;

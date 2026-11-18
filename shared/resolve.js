@@ -3,7 +3,7 @@
 import { CONFIG } from './config.js';
 import {
   key, inBounds, dist, linePath, hasLineOfSight, accelerate, moveSub,
-  canTarget, areaCells, inBaffles, noiseOf,
+  canTarget, areaCells, inBaffles, noiseOf, pitDamping,
 } from './grid.js';
 
 const T = CONFIG.torpedo;
@@ -173,7 +173,8 @@ function passiveSonar(state, listener, rng, ev) {
     if (!target.alive || target.id === listener.id) continue;
     if (!hasLineOfSight(state.board, listener.x, listener.y, target.x, target.y)) continue;
     if (inBaffles(listener.vx, listener.vy, target.x - listener.x, target.y - listener.y)) continue;
-    const chance = ev.noise[target.id] - dist(listener.x, listener.y, target.x, target.y);
+    const chance = ev.noise[target.id] - dist(listener.x, listener.y, target.x, target.y)
+      - pitDamping(state.board, target.x, target.y) - pitDamping(state.board, listener.x, listener.y);
     if (rng.chance(chance / 100)) contacts.push({ x: target.x, y: target.y });
   }
   ev.contacts[listener.id] = contacts;

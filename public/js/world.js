@@ -6,6 +6,7 @@ import { Effects } from './scene/effects.js';
 import { Life } from './scene/life.js';
 import { makeSub, makeTorpedo, setHeading, addHeadlight, disposeObject } from './scene/models.js';
 import { COMPASS, cellName } from './texts.js';
+import { pitDip } from './scene/pits.js';
 
 const SUB_HEIGHT = 0.45;
 const TORPEDO_HEIGHT = 0.3;
@@ -278,6 +279,16 @@ export class World {
     if (cell) this.hoverLabel.pos.copy(this.at(cell.x, cell.y, 0.9));
   }
 
+  // Ubåter senker seg ned i en grop når de ligger i eller glir gjennom den.
+  pitDipAt(pos) {
+    let dip = 0;
+    for (const [x, y] of this.board.pitList) {
+      const c = this.stage.cellToWorld(x, y);
+      dip = Math.max(dip, pitDip(Math.hypot(pos.x - c.x, pos.z - c.z)));
+    }
+    return dip * 0.8;
+  }
+
   frame(dt, time) {
     this.effects.update(dt);
     this.markers.update(time);
@@ -286,7 +297,7 @@ export class World {
     const bob = Math.sin(time * 2) * 0.03;
     for (const model of [this.sub, this.ghost, ...this.others.values()]) {
       if (model.userData.sinking) continue;
-      model.position.y = SUB_HEIGHT + bob;
+      model.position.y = SUB_HEIGHT + bob - this.pitDipAt(model.position);
       const { propeller } = model.userData;
       if (propeller) propeller.rotation.x += dt * 9;
     }

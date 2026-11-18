@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { key } from '/shared/grid.js';
 import { rockTexture, chimneyTextures, columnTexture } from './groundtex.js';
+import { makeWreckParts, placeShip, placeArch, placeTrinket } from './wrecks.js';
 
 const WEED_TINTS = ['#3fae5a', '#2f9450', '#5cc46a', '#2a8a66'];
 const CORAL_TINTS = ['#e8788a', '#e89a5c', '#b07fe0', '#e6c36a'];
@@ -84,9 +85,9 @@ function placeRuin(columns, centre, rng) {
   columns.count += 1;
 }
 
-// Fjellruter er enten et fjell (hovedtopp med småtopper rundt), en rykende vulkan eller en ruin.
-// Alle tre virker likt i reglene. Andelene kommer fra biotopen.
-export function buildRocks(stage, board, rng, theme) {
+// Fjellruter er et fjell (hovedtopp med småtopper rundt), en rykende vulkan, et skipsvrak eller
+// en ruin. Alle virker likt i reglene. Andelene kommer fra biotopen.
+export function buildRocks(stage, board, rng, theme, parts) {
   const rockMat = new THREE.MeshLambertMaterial({ map: rockTexture(rng), flatShading: true });
   const lava = chimneyTextures(rng);
   const chimneyMat = new THREE.MeshLambertMaterial({
@@ -100,6 +101,8 @@ export function buildRocks(stage, board, rng, theme) {
   const columnMat = new THREE.MeshLambertMaterial({ map: columnTexture(rng), flatShading: true });
   const columns = instanced(new THREE.CylinderGeometry(0.13, 0.15, 1, 8), columnMat, count * 5);
   columns.castShadow = true;
+  parts.blocks = instanced(new THREE.BoxGeometry(1, 1, 1), columnMat, count * 2);
+  parts.blocks.castShadow = true;
   rocks.castShadow = true;
   chimneys.castShadow = true;
   const smokers = [];
@@ -119,8 +122,13 @@ export function buildRocks(stage, board, rng, theme) {
       }
       continue;
     }
+    if (rng.chance(theme.wrecks ?? 0.05)) {
+      placeShip(parts, centre, rng);
+      continue;
+    }
     if (rng.chance(theme.ruins)) {
-      placeRuin(columns, centre, rng);
+      if (rng.chance(0.4)) placeArch(columns, parts, centre, rng, rng.pick(['#ffffff', '#e9e4d6', '#dfe8e6']));
+      else placeRuin(columns, centre, rng);
       continue;
     }
     const height = 1.1 + rng.next() * 0.9;
@@ -133,7 +141,7 @@ export function buildRocks(stage, board, rng, theme) {
       place(rocks, pos, new THREE.Vector3(0.5, h, 0.5), rng.next() * 6, rng.pick(theme.rocks), jitter());
     }
   }
-  return { meshes: [rocks, chimneys, glow, columns], smokers };
+  return { meshes: [rocks, chimneys, glow, columns, parts.blocks], smokers };
 }
 
 const lit = () => new THREE.MeshLambertMaterial({ flatShading: true });
@@ -149,9 +157,14 @@ function starfishGeometry() {
   return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
 }
 
-// Pynt i hjørnene av rutene. Returnerer også hvor det bobler opp fra bunnen.
-// amount: hvor frodig biotopen er (1 = vanlig).
-export function buildDecor(stage, board, rng, amount = 1) {
+// Pynt i hjørnene av rutene. Returnerer også hvor det bobler opp fra bunnen. Biotopen styrer
+// hvor frodig det er (decor, 1 = vanlig), andelen tang og koraller, tangens høyde og farger,
+// hvor ofte det bobler, og hvor ofte det ligger igjen småting fra skip.
+export function buildDecor(stage, board, rng, theme, parts) {
+  const amount = theme.decor;
+  const weedShare = theme.weeds ?? 0.15;
+  const coralShare = weedShare + (theme.corals ?? 0.12);
+  const [weedMin, weedRange] = theme.weedHeight ?? [0.8, 1.2];
   const cells = board.size * board.size;
   const weeds = instanced(new THREE.ConeGeometry(0.06, 0.5, 4), lit(), cells);
   // Rørkoraller: små klynger av stående rør i ulik høyde.
@@ -166,27 +179,31 @@ export function buildDecor(stage, board, rng, amount = 1) {
     for (let x = 0; x < board.size; x++) {
       const rock = board.rocks.has(key(x, y));
       const roll = rng.next();
+      if (board.pits.has(key(x, y))) continue;
       const centre = stage.cellToWorld(x, y);
-      if (!rock && roll > 0.975) vents.push(centre.clone());
+      if (!rock && roll > 1 - (theme.vents ?? 0.025)) vents.push(centre.clone());
+      if (!rock && rng.chance(theme.trinkets ?? 0.015)) {
+        placeTrinket(parts, new THREE.Vector3(centre.x + (rng.int(2) ? 0.27 : -0.27), 0, centre.z + (rng.int(2) ? 0.27 : -0.27)), rng);
+      }
       if (roll > (rock ? 0.55 : 0.34) || !rng.chance(amount)) continue;
       const corner = new THREE.Vector3(centre.x + (rng.int(2) ? 0.3 : -0.3), 0, centre.z + (rng.int(2) ? 0.3 : -0.3));
       let tint = null;
       for (let i = 0; i < 3; i++) {
         const pos = corner.clone().add(new THREE.Vector3((rng.next() - 0.5) * 0.22, 0, (rng.next() - 0.5) * 0.22));
-        if (roll < 0.15) {
-          const h = 0.8 + rng.next() * 1.2;
+        if (roll < weedShare) {
+          const h = weedMin + rng.next() * weedRange;
           pos.y = h * 0.25;
           weedInfo.push({ index: weeds.count, pos, h, phase: rng.next() * 6 });
-          place(weeds, pos, new THREE.Vector3(1, h, 1), 0, rng.pick(WEED_TINTS));
-        } else if (roll < 0.27) {
+          place(weeds, pos, new THREE.Vector3(1, h, 1), 0, rng.pick(theme.weedTints ?? WEED_TINTS));
+        } else if (roll < coralShare) {
           const h = 0.5 + rng.next() * 0.9;
           pos.y = 0.15 * h;
-          if (i === 0) tint = rng.pick(CORAL_TINTS); // hele klyngen har samme farge
+          if (i === 0) tint = rng.pick(theme.coralTints ?? CORAL_TINTS); // hele klyngen har samme farge
           place(corals, pos, new THREE.Vector3(1, h, 1), rng.next() * 6, tint);
-        } else if (roll >= 0.27 && roll < 0.295) {
+        } else if (roll < coralShare + 0.025) {
           pos.y = 0.012;
           if (i === 0) place(starfish, pos, new THREE.Vector3(1, 1, 1), rng.next() * 6, rng.pick(STARFISH_TINTS));
-        } else if (roll >= 0.295) {
+        } else {
           pos.y = 0.03;
           place(pebbles, pos, new THREE.Vector3(1.2, 0.7, 1), rng.next() * 6, rng.pick(PEBBLE_TINTS));
         }

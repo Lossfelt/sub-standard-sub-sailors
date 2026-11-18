@@ -56,7 +56,7 @@ export class Match {
       t: 'start',
       you: id,
       seed: this.seed,
-      board: { size: this.board.size, rocks: this.board.rockList },
+      board: { size: this.board.size, rocks: this.board.rockList, pits: this.board.pitList },
       players: this.room.publicPlayers(),
       submitted: Object.keys(this.orders),
       view: buildView(this, id),

@@ -6,6 +6,8 @@ import { key } from '/shared/grid.js';
 import { tileTextures, cliffTexture } from './groundtex.js';
 import { buildRocks, buildDecor } from './props.js';
 import { makeCaustics } from './water.js';
+import { buildPits } from './pits.js';
+import { makeWreckParts } from './wrecks.js';
 
 // Biotoper: samme regler, men ulikt utseende fra spill til spill. Tallene er andeler og terskler.
 const THEMES = [
@@ -23,6 +25,24 @@ const THEMES = [
     stone: ['#a5cbdc', '#98c1d4', '#b4d6e4'], moss: ['#8fcfc6', '#84c4bd'], sand: ['#e3edf2', '#d8e6ee'],
     rockFloor: '#7fa3b6', rocks: ['#ffffff', '#f2fbff', '#e6f4fa'],
     mossFrom: 0.82, sandFrom: 0.5, smokers: 0.08, ruins: 0.12, decor: 0.6,
+  },
+  { // skipskirkegård: grumsete og brunlig, med vrak på de fleste fjellrutene og rester overalt
+    stone: ['#7d8a86', '#74827d', '#869390'], moss: ['#7a8a5a', '#6e7e50'], sand: ['#a49a7c', '#9a9174'],
+    rockFloor: '#4e5650', rocks: ['#c9c6b8', '#b9b6a6', '#d6d2c2'],
+    mossFrom: 0.6, sandFrom: 0.55, smokers: 0.05, wrecks: 0.6, ruins: 0.1, decor: 0.5, trinkets: 0.12,
+    weedTints: ['#5f6b34', '#6f7a3a', '#4f5c2e'], coralTints: ['#b8a58a', '#a8927a'],
+  },
+  { // tareskog: høy, brun tare som svaier over lys sand
+    stone: ['#6a9a9a', '#5f9090', '#76a6a3'], moss: ['#5e8f4a', '#557f42'], sand: ['#b8b08a', '#ada682'],
+    rockFloor: '#4a6a66', rocks: ['#ffffff', '#e4edf2', '#d6e2ea'],
+    mossFrom: 0.45, sandFrom: 0.7, smokers: 0.05, wrecks: 0.06, ruins: 0.1, decor: 1.2,
+    weeds: 0.32, corals: 0.03, weedHeight: [2, 1.8], weedTints: ['#6b7a2e', '#7d8a34', '#5a6b2a', '#8a7a30'],
+  },
+  { // varme kilder: mørk basalt, gule og oransje bakteriematter, mange skorsteiner og bobler
+    stone: ['#5a5a66', '#52525e', '#64646f'], moss: ['#d9b44a', '#e0973c', '#c9c24a'], sand: ['#8a7a6a', '#807060'],
+    rockFloor: '#2e2e38', rocks: ['#a8a0b8', '#9890a8', '#b4aec4'],
+    mossFrom: 0.55, sandFrom: 0.75, smokers: 0.75, wrecks: 0.03, ruins: 0.03, decor: 0.45, vents: 0.08,
+    weeds: 0.04, corals: 0.2, coralTints: ['#efe8dc', '#d94a3d', '#e8d8c8'], // rørormer
   },
 ];
 
@@ -43,9 +63,17 @@ function buildBase(size, rng) {
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const side = new THREE.MeshLambertMaterial({ map: cliff, vertexColors: true });
-  const top = new THREE.MeshLambertMaterial({ color: '#0b222c' });
-  const base = new THREE.Mesh(geometry, [side, side, top, top, side, side]);
+  // Toppen tegnes ikke, slik at gropene kan gå ned i sokkelen. En mørk flate lenger nede
+  // gir samme farge i fugene mellom flisene.
+  const hidden = new THREE.MeshBasicMaterial({ visible: false });
+  const base = new THREE.Mesh(geometry, [side, side, hidden, hidden, side, side]);
   base.position.y = -1.4;
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(size + 0.3, size + 0.3).rotateX(-Math.PI / 2),
+    new THREE.MeshLambertMaterial({ color: '#0b222c' }),
+  );
+  floor.position.y = 1.4 - 0.6; // 0.6 under brettet, i sokkelens koordinater
+  base.add(floor);
   return base;
 }
 
@@ -100,6 +128,7 @@ function buildTiles(stage, board, rng, theme) {
   const sand = patchNoise(size, rng);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
+      if (board.pits.has(key(x, y))) continue; // gropa har sin egen skål
       const rock = board.rocks.has(key(x, y));
       const mossiness = THREE.MathUtils.smoothstep(moss(x, y), 0.35, 0.7);
       const kind = tileKind(rng, theme, rock, mossiness, sand(x, y));
@@ -123,17 +152,21 @@ function buildTiles(stage, board, rng, theme) {
 export function buildTerrain(stage, board, seed) {
   const rng = makeRng(seed ^ 0x5eabed);
   const group = new THREE.Group();
-  const caustics = makeCaustics(board.size);
+  const caustics = makeCaustics(board.size, board.pitList);
   const theme = rng.pick(THEMES);
-  const rocks = buildRocks(stage, board, rng, theme);
-  const decor = buildDecor(stage, board, rng, theme.decor);
+  const parts = makeWreckParts(rng, board.rockList.length, board.size * board.size);
+  const rocks = buildRocks(stage, board, rng, theme, parts);
+  const decor = buildDecor(stage, board, rng, theme, parts);
   const tiles = buildTiles(stage, board, rng, theme);
+  const pits = buildPits(stage, board, rng, theme);
   group.add(
+    ...pits.meshes,
     buildBase(board.size, rng),
     ...tiles.meshes,
     caustics.mesh,
     ...rocks.meshes,
     ...decor.meshes,
+    parts.hulls, parts.beams, parts.masts, parts.barrels, parts.amphoras,
   );
 
   let gaps = null;

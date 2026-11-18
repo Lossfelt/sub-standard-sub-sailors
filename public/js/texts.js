@@ -36,6 +36,7 @@ export const RULES_HTML = `
 <h3>Sonar</h3>
 <ul><li><b>Lytt:</b> sjanse for å høre hver ubåt = støyen dens minus avstanden i ruter (prosent).</li>
 <li>Støy: stille ${CONFIG.noise.idle}, motor ${CONFIG.noise.perSpeed} per fartsnivå, reparasjon ${CONFIG.noise.repair}, torpedoskudd ${CONFIG.noise.torpedo}.</li>
+<li><b>Groper:</b> noen brett har en eller to groper i bunnen. Ligger du i en grop, dempes lyden ${CONFIG.pits.damping} prosentpoeng begge veier: du høres dårligere, men hører også dårligere selv. Fokusert sonar og torpedoer virker som vanlig.</li>
 <li>Motoren er ikke laget for tomgang. For hver runde i strekk du står stille, hoster den ${CONFIG.noise.idleGrowth} mer, opp til ${CONFIG.noise.idleMax}. Den roer seg straks du kjører igjen.</li>
 <li><b>Fokuser sonar:</b> søk i et 3×3-område. Står du stille får du nøyaktig rute, er du i fart får du bare ja eller nei. Du hører ikke resten av kartet den runden.</li>
 <li>Fjell gir sonarskygge: du hører ikke det som ligger bak dem.</li>
@@ -58,7 +59,7 @@ export const RULES_HTML = `
 <li><b>Hvitt kryss:</b> en eksplosjon alle hørte, vises i to runder.</li>
 <li><b>Rødlig felt</b> rundt deg når du velger torpedo: for nært til å sikte på. <b>Lyse ruter</b> viser torpedoens bane.</li>
 <li><b>Blått felt:</b> området du fokuserer sonaren på. Etter søket er det <b>oransje</b> hvis det er en ubåt der, gråblått hvis tomt, og <b>mørkt</b> der fjell gir sonarskygge.</li>
-<li><b>Mørk, veltet ubåt:</b> et vrak. <b>Rykende skorsteiner</b> (vulkaner) og <b>søyleruiner</b> virker som fjell. En ubåt som <b>krenger og lekker bobler</b> er skadet. Bokstaver og tall langs kanten gir rutenavn som "F7".</li>
+<li><b>Mørk, veltet ubåt:</b> et vrak. <b>Mørk fordypning</b> med steinkant: en grop. <b>Rykende skorsteiner</b> (vulkaner), <b>gamle skipsvrak</b> og <b>søyleruiner</b> virker som fjell. Kasser, tønner og krukker på bunnen er bare pynt. En ubåt som <b>krenger og lekker bobler</b> er skadet. Bokstaver og tall langs kanten gir rutenavn som "F7".</li>
 <li>Tang, koraller, sjøstjerner, krystaller, fisk og bobler er bare pynt.</li></ul>
 <h3>Styring</h3>
 <ul><li>Dra i brettet (eller bruk W, A, S, D) for å flytte utsnittet. Rull, knip eller bruk + og - for å zoome. Q og E snur brettet. Piltastene flytter rutemarkøren, mellomrom velger ruten og Enter sender ordre.</li></ul>`;

@@ -137,10 +137,11 @@ export class Hud {
     }
   }
 
-  // coughing: motoren har gått på tomgang og bråker mer for hver runde.
-  setReadout(speedText, noise, coughing = false) {
+  // coughing: motoren har gått på tomgang og bråker mer for hver runde. inPit: gropa demper støyen.
+  setReadout(speedText, noise, coughing = false, inPit = false) {
     this.el.speed.textContent = `Fart: ${speedText}`;
-    this.el.noise.textContent = `Støy: ${noise}${coughing ? ' (motoren hoster)' : ''}`;
+    const notes = [coughing && 'motoren hoster', inPit && 'i gropa'].filter(Boolean);
+    this.el.noise.textContent = `Støy: ${noise}${notes.length ? ` (${notes.join(', ')})` : ''}`;
     this.el.noise.classList.toggle('cough', coughing);
   }
 

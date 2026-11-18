@@ -48,6 +48,12 @@ export class Minimap {
       const [x, y] = k.split(',').map(Number);
       dot(x, y, '#5d6f80', CELL);
     }
+    for (const [x, y] of board.pitList) {
+      ctx.fillStyle = '#05121a';
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * CELL, (y + 0.5) * CELL, CELL * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+    }
     for (const b of game.booms) dot(b.x, b.y, '#ffffff', 4);
     for (const c of game.contacts) dot(c.x, c.y, view.round - c.round === 0 ? '#ffb347' : '#a0702e', 6);
     for (const t of view.torpedoes) if (t.mine) dot(t.x, t.y, '#ff5340', 4);
