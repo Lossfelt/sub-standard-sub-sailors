@@ -291,3 +291,21 @@ dialog.confirm h2 { margin-top: 0; }
   touch-action: none;
   box-shadow: 0 0 0 2px var(--line);
 }
+
+/* Knapper øverst i sidepanelet som skjuler spillerlisten og minikartet. */
+.panel-toggles { display: flex; gap: 4px; justify-content: flex-end; margin-bottom: 4px; }
+.toggle {
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 3px 6px;
+  color: var(--dim);
+  background: #0c2335;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.toggle[aria-pressed="true"] { color: var(--text); background: #163650; }
+.toggle[aria-pressed="false"] { text-decoration: line-through; }
+.hide-players .player-list, .hide-map .minimap { display: none; }
+.hide-players.hide-map .panel-toggles { margin-bottom: 0; }

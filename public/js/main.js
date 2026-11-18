@@ -51,6 +51,28 @@ const hud = new Hud({
 game = new Game(stage, hud, net);
 const minimap = new Minimap($('minimap-wrap'), $('minimap'), stage, () => game);
 stage.onFrame(() => minimap.draw());
+
+// Spillerlisten og minikartet kan skjules hver for seg, siden de tar plass på små skjermer.
+// Valget huskes til neste gang.
+function panelToggle(button, className) {
+  const key = `ssss-${className}`;
+  const apply = (hidden) => {
+    $('side-panel').classList.toggle(className, hidden);
+    button.setAttribute('aria-pressed', String(!hidden));
+  };
+  try {
+    apply(localStorage.getItem(key) === '1');
+  } catch { /* uten lagring vises alt */ }
+  button.addEventListener('click', () => {
+    const hidden = !$('side-panel').classList.contains(className);
+    apply(hidden);
+    try {
+      localStorage.setItem(key, hidden ? '1' : '0');
+    } catch { /* valget huskes bare ikke */ }
+  });
+}
+panelToggle($('toggle-players'), 'hide-players');
+panelToggle($('toggle-map'), 'hide-map');
 // Feilsøkingskrok under lokal utvikling, så scenen kan inspiseres og drives fra konsollen.
 if (['localhost', '127.0.0.1'].includes(location.hostname)) window.ssss = { stage, game };
 

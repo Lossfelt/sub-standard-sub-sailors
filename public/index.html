@@ -90,7 +90,11 @@
       </div>
     </header>
 
-    <aside class="hud top-right panel">
+    <aside id="side-panel" class="hud top-right panel">
+      <div class="panel-toggles">
+        <button id="toggle-players" class="toggle" aria-pressed="true" title="Vis eller skjul spillerne">Spillere</button>
+        <button id="toggle-map" class="toggle" aria-pressed="true" title="Vis eller skjul minikartet (når du har zoomet inn)">Kart</button>
+      </div>
       <ul id="players" class="player-list compact"></ul>
       <div id="minimap-wrap" class="minimap" title="Minikart: trykk for å flytte utsnittet" hidden>
         <canvas id="minimap" aria-label="Minikart over hele brettet"></canvas>
