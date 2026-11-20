@@ -16,7 +16,7 @@
     "@fontsource/pixelify-sans": "^5.0.0",
     "@fontsource/vt323": "^5.0.0",
     "pg": "^8.23.1",
-    "three": "^0.170.0",
+    "three": "^0.187.0",
     "ws": "^8.18.0"
   }
 }
