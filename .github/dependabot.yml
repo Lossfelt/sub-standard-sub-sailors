@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Oslo
+    open-pull-requests-limit: 5
+    # Minor- og patch-oppdateringer samles i grupper. Major-oppdateringer
+    # kommer som egne PR-er, slik at de kan testes hver for seg.
+    groups:
+      sikkerhetsoppdateringer:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      utviklingsavhengigheter:
+        applies-to: version-updates
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      produksjonsavhengigheter:
+        applies-to: version-updates
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Oslo
+    open-pull-requests-limit: 5
+    # Minor og patch samles i én PR. Major-oppdateringer kommer som egne PR-er.
+    groups:
+      github-actions:
+        update-types:
+          - minor
+          - patch
