@@ -1,0 +1,45 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # Samme Node-versjon som Render bruker (NODE_VERSION i render.yaml).
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  # Fletter Dependabot-PR-er automatisk når CI er grønn, men bare minor- og
+  # patch-oppdateringer. Major-hopp blir liggende for manuell testing.
+  # Flettes direkte i stedet for med "gh pr merge --auto", slik at det ikke
+  # krever branch protection eller "Allow auto-merge" i repoet.
+  dependabot-fletting:
+    needs: test
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3
+      # Major-oppdateringer flettes ikke automatisk, med unntak av GitHub
+      # Actions-oppdateringer: PR-ens egen CI kjører med den nye action-versjonen.
+      - if: steps.metadata.outputs.update-type != 'version-update:semver-major' || steps.metadata.outputs.package-ecosystem == 'github_actions'
+        run: gh pr merge "$PR_URL" --squash --delete-branch
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
