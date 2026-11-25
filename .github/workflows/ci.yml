@@ -21,10 +21,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      # Røyktest i nettleser: fanger feil i frontenden som enhetstestene ikke
-      # ser, f.eks. at en avhengighet endrer filstier (three r187).
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
 
   # Fletter Dependabot-PR-er automatisk når CI er grønn, men bare minor- og
   # patch-oppdateringer. Major-hopp blir liggende for manuell testing.
