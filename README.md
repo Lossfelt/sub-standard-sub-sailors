@@ -20,6 +20,7 @@ npm start
 
 - `npm run dev` starter serveren på nytt ved endringer i serverkoden
 - `npm test` kjører testene for reglene og en simulering der bots spiller hele spill
+- `npm run test:e2e` starter serveren og spiller seg fra menyen inn i et spill i headless Chromium (første gang: `npx playwright install chromium`)
 
 ## Slik er det bygget
 

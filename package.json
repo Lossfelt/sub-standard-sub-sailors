@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:e2e": "node --test e2e/smoke.js"
   },
   "dependencies": {
     "@fontsource/pixelify-sans": "^5.0.0",
@@ -18,5 +19,8 @@
     "pg": "^8.23.1",
     "three": "^0.187.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }
