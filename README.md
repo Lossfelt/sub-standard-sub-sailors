@@ -19,7 +19,7 @@ npm start
 (eller lenken) med andre på samme nettverk. Andre kommandoer:
 
 - `npm run dev` starter serveren på nytt ved endringer i serverkoden
-- `npm test` kjører testene for reglene og en simulering der bots spiller hele spill
+- `npm test` kjører testene for reglene og en simulering der bots spiller hele spill, og sjekker at alle filene frontenden laster (import-map, imports, CSS) finnes
 
 ## Slik er det bygget
 

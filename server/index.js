@@ -1,22 +1,12 @@
 // HTTP-server for statiske filer pluss WebSocket for spillet. Én prosess, ingen byggesteg.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { dirname, extname, join, normalize, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { extname } from 'node:path';
 import { WebSocketServer } from 'ws';
 import { handleConnection } from './lobby.js';
+import { resolveFile } from './static.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT) || 3000;
-
-// URL-prefiks -> mappe på disk. Første treff vinner, så de mest spesifikke står først.
-const MOUNTS = [
-  ['/vendor/three/', join(ROOT, 'node_modules', 'three', 'build')],
-  ['/vendor/fonts/vt323/', join(ROOT, 'node_modules', '@fontsource', 'vt323')],
-  ['/vendor/fonts/pixelify-sans/', join(ROOT, 'node_modules', '@fontsource', 'pixelify-sans')],
-  ['/shared/', join(ROOT, 'shared')],
-  ['/', join(ROOT, 'public')],
-];
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -30,17 +20,6 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.woff': 'font/woff',
 };
-
-function resolveFile(urlPath) {
-  const path = urlPath === '/' ? '/index.html' : urlPath;
-  for (const [prefix, dir] of MOUNTS) {
-    if (!path.startsWith(prefix)) continue;
-    const file = normalize(join(dir, path.slice(prefix.length)));
-    // Hindrer at "../" i URL-en når filer utenfor den monterte mappen.
-    return file.startsWith(dir + sep) ? file : null;
-  }
-  return null;
-}
 
 const server = createServer(async (req, res) => {
   // En ugyldig URL (for eksempel "/%E0") får decodeURIComponent til å kaste. Det skal gi 404, ikke
